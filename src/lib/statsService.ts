@@ -73,7 +73,7 @@ export async function trackJobApplied(): Promise<void> {
 /**
  * Update stats when a job is marked as won
  */
-export async function trackJobWon(projectValue?: number, ehr?: number): Promise<void> {
+export async function trackJobWon(_projectValue?: number, _ehr?: number): Promise<void> {
   await initializeTodayStats();
   const todayKey = getTodayKey();
   const statsRef = doc(db, 'dailyStats', todayKey);
@@ -83,8 +83,8 @@ export async function trackJobWon(projectValue?: number, ehr?: number): Promise<
     lastUpdated: new Date(),
   };
 
-  if (projectValue) {
-    updates.totalRevenue = increment(projectValue);
+  if (_projectValue) {
+    updates.totalRevenue = increment(_projectValue);
   }
 
   await updateDoc(statsRef, updates);
@@ -119,7 +119,7 @@ async function recalculateAverages(dateKey: string): Promise<void> {
   const statsSnap = await getDoc(statsRef);
 
   if (statsSnap.exists()) {
-    const data = statsSnap.data() as DailyStats;
+    // const data = statsSnap.data() as DailyStats;
 
     // Get all won jobs for today to calculate averages
     const today = new Date(dateKey);
@@ -198,7 +198,7 @@ export async function getAggregatedStats(): Promise<AggregatedStats> {
 
   statsSnap.docs.forEach((doc) => {
     const data = doc.data() as DailyStats;
-    const date = data.date.toDate ? data.date.toDate() : new Date(data.date);
+    const date = data.date instanceof Date ? data.date : new Date(data.date as any);
 
     // All time
     totalProposalsSent += data.proposalsSent || 0;

@@ -41,7 +41,6 @@ export function AddMockDataButton() {
   const [showClearModal, setShowClearModal] = useState(false);
   const [showFetchModal, setShowFetchModal] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [totalJobs, setTotalJobs] = useState(0);
   const { settings } = useSettings();
 
   const handleFetchClick = () => {
@@ -76,8 +75,6 @@ export function AddMockDataButton() {
 
       const data = result.data as { jobs: any[]; count: number };
       console.log(`✅ Fetched ${data.count} jobs from Upwork via Cloud Function`);
-
-      setTotalJobs(data.jobs.length);
 
       // Transform and score each job
       let savedCount = 0;

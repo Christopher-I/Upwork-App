@@ -166,14 +166,14 @@ export async function addMockJobs() {
       console.log(`   ✅ Score: ${total}/100 (${classification})`);
 
       // Show AI-powered dimensions
-      if (jobWithScore.estimatedEHR) {
-        console.log(`   💰 EHR: $${jobWithScore.estimatedEHR}/hr (${breakdown.ehrPotential}/15)`);
+      if ((jobWithScore as any).estimatedEHR) {
+        console.log(`   💰 EHR: $${(jobWithScore as any).estimatedEHR}/hr (${breakdown.ehrPotential}/15)`);
       }
-      if (jobWithScore.jobClarity) {
-        console.log(`   📦 Clarity: ${jobWithScore.jobClarity.total} boxes (${breakdown.jobClarity}/15)`);
+      if ((jobWithScore as any).jobClarity) {
+        console.log(`   📦 Clarity: ${(jobWithScore as any).jobClarity.total} boxes (${breakdown.jobClarity}/15)`);
       }
-      if (jobWithScore.detectedOutcomes) {
-        console.log(`   🎯 Impact: ${jobWithScore.detectedOutcomes.length} outcomes (${breakdown.businessImpact}/15)`);
+      if ((jobWithScore as any).detectedOutcomes) {
+        console.log(`   🎯 Impact: ${(jobWithScore as any).detectedOutcomes.length} outcomes (${breakdown.businessImpact}/15)`);
       }
 
     } catch (error) {

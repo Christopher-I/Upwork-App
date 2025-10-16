@@ -72,7 +72,7 @@ export function Dashboard() {
       filtered = filtered.filter((job) => {
         const location = job.client?.location;
         // Handle both string format and object format
-        const country = typeof location === 'string' ? location : location?.country;
+        const country = typeof location === 'string' ? location : (location as any)?.country;
         return country === 'United States' || country === 'US' || country === 'USA';
       });
     }
