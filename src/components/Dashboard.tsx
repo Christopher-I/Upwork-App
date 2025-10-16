@@ -20,9 +20,25 @@ export function Dashboard() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Persist filters in localStorage
-  const [filters, setFilters] = useState<FilterOptions>(() => {
-    const saved = localStorage.getItem('jobFilters');
+  // Get default filter options
+  const getDefaultFilters = (): FilterOptions => ({
+    budgetType: 'all',
+    minBudget: 0,
+    maxBudget: 0,
+    minMarketRate: 0,
+    maxMarketRate: 0,
+    minProposals: 0,
+    maxProposals: 0,
+    teamLanguage: 'all',
+    experienceLevel: 'all',
+    paymentVerified: 'all',
+    clientCountry: 'us_only',
+    sortBy: 'score_high',
+  });
+
+  // Persist filters independently for each tab in localStorage
+  const [recommendedFilters, setRecommendedFilters] = useState<FilterOptions>(() => {
+    const saved = localStorage.getItem('recommendedFilters');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -30,21 +46,46 @@ export function Dashboard() {
         // If parsing fails, use defaults
       }
     }
-    return {
-      budgetType: 'all',
-      minBudget: 0,
-      maxBudget: 0,
-      minMarketRate: 0,
-      maxMarketRate: 0,
-      minProposals: 0,
-      maxProposals: 0,
-      teamLanguage: 'all',
-      experienceLevel: 'all',
-      paymentVerified: 'all',
-      clientCountry: 'us_only',
-      sortBy: 'score_high',
-    };
+    return getDefaultFilters();
   });
+
+  const [appliedFilters, setAppliedFilters] = useState<FilterOptions>(() => {
+    const saved = localStorage.getItem('appliedFilters');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        // If parsing fails, use defaults
+      }
+    }
+    return getDefaultFilters();
+  });
+
+  const [allFilters, setAllFilters] = useState<FilterOptions>(() => {
+    const saved = localStorage.getItem('allFilters');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        // If parsing fails, use defaults
+      }
+    }
+    return getDefaultFilters();
+  });
+
+  // Get current filters based on active tab
+  const filters = useMemo(() => {
+    switch (activeTab) {
+      case 'recommended':
+        return recommendedFilters;
+      case 'applied':
+        return appliedFilters;
+      case 'all':
+        return allFilters;
+      default:
+        return recommendedFilters;
+    }
+  }, [activeTab, recommendedFilters, appliedFilters, allFilters]);
 
   // Save active tab to localStorage when it changes
   const handleTabChange = (tab: TabType) => {
@@ -52,10 +93,22 @@ export function Dashboard() {
     localStorage.setItem('activeTab', tab);
   };
 
-  // Save filters to localStorage when they change
+  // Save filters to localStorage when they change (for the active tab)
   const handleFilterChange = (newFilters: FilterOptions) => {
-    setFilters(newFilters);
-    localStorage.setItem('jobFilters', JSON.stringify(newFilters));
+    switch (activeTab) {
+      case 'recommended':
+        setRecommendedFilters(newFilters);
+        localStorage.setItem('recommendedFilters', JSON.stringify(newFilters));
+        break;
+      case 'applied':
+        setAppliedFilters(newFilters);
+        localStorage.setItem('appliedFilters', JSON.stringify(newFilters));
+        break;
+      case 'all':
+        setAllFilters(newFilters);
+        localStorage.setItem('allFilters', JSON.stringify(newFilters));
+        break;
+    }
   };
 
   const { settings, updateSettings } = useSettings();
@@ -92,9 +145,7 @@ export function Dashboard() {
       return true;
     });
 
-    // Only apply additional filters on "all" tab
-    if (activeTab !== 'all') return filtered;
-
+    // Apply all filters to all tabs (each tab has independent filters)
     // Budget type filter
     if (filters.budgetType !== 'all') {
       if (filters.budgetType === 'open') {
@@ -253,26 +304,6 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Country Filter - Shows on all tabs */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-medium text-gray-700">Client Location:</label>
-              <select
-                value={filters.clientCountry}
-                onChange={(e) => handleFilterChange({ ...filters, clientCountry: e.target.value as any })}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="us_only">US Clients Only</option>
-                <option value="all">All Countries</option>
-              </select>
-            </div>
-            <div className="text-sm text-gray-500">
-              Showing <span className="font-semibold text-gray-900">{jobs.length}</span> jobs
-            </div>
-          </div>
-        </div>
-
         {/* Tabs */}
         <div className="flex gap-6 mb-6 border-b border-gray-200">
           <TabButton
@@ -298,10 +329,28 @@ export function Dashboard() {
           </TabButton>
         </div>
 
-        {/* Filters - Only show on All Jobs tab */}
-        {activeTab === 'all' && (
-          <JobFilters filters={filters} onFilterChange={handleFilterChange} />
+        {/* Total Market Value - Only show on recommended tab */}
+        {activeTab === 'recommended' && (
+          <div className="bg-gradient-to-r from-success-50 to-success-100 border border-success-200 rounded-lg px-6 py-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-success-700 font-medium mb-1">Total Pipeline Value</p>
+                <p className="text-3xl font-bold text-success-900">
+                  ${jobs.reduce((sum, job) => sum + (job.estimatedPrice || 0), 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-success-700 font-medium mb-1">Avg Market Rate</p>
+                <p className="text-2xl font-bold text-success-900">
+                  ${jobs.length > 0 ? Math.round(jobs.reduce((sum, job) => sum + (job.estimatedPrice || 0), 0) / jobs.length).toLocaleString() : 0}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
+
+        {/* Filters - Show on all tabs with independent settings */}
+        <JobFilters filters={filters} onFilterChange={handleFilterChange} />
 
         {/* Jobs Grid */}
         {loading ? (
