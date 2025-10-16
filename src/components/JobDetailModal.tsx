@@ -162,12 +162,13 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                 ]}
               />
               <ScoreItem
-                label="Outcome Clarity"
-                score={job.scoreBreakdown?.outcomeClarity || 0}
+                label="Business Impact"
+                score={job.scoreBreakdown?.businessImpact || 0}
                 max={15}
                 details={[
                   `Detected: ${job.detectedOutcomes?.join(', ') || 'none'}`,
-                ]}
+                  job.isTechnicalOnly ? '⚠️ Technical-only job (avoid)' : '',
+                ].filter(Boolean)}
               />
               <ScoreItem
                 label="Job Clarity"

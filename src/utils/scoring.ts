@@ -12,7 +12,7 @@ export function calculateJobScore(
     clientQuality: scoreClientQuality(job),
     keywordsMatch: scoreKeywordsMatch(job, settings),
     professionalSignals: scoreProfessionalSignals(job),
-    outcomeClarity: scoreOutcomeClarity(job),
+    businessImpact: scoreBusinessImpact(job),
     jobClarity: scoreJobClarity(job),
     ehrPotential: scoreEHRPotential(job, settings),
     redFlags: scoreRedFlags(job),
@@ -22,7 +22,7 @@ export function calculateJobScore(
     breakdown.clientQuality.subtotal +
     breakdown.keywordsMatch +
     breakdown.professionalSignals.subtotal +
-    breakdown.outcomeClarity +
+    breakdown.businessImpact +
     breakdown.jobClarity +
     breakdown.ehrPotential +
     breakdown.redFlags;
@@ -212,12 +212,15 @@ export function scoreProfessionalSignals(job: Partial<Job>) {
 }
 
 /**
- * 4. Outcome Clarity (15 points)
+ * 4. Business Impact (15 points)
+ * Measures if job solves a business problem vs just being a technical task
+ * Goal: Avoid "need a React developer" jobs, prefer "build X to achieve Y" jobs
  */
-export function scoreOutcomeClarity(job: Partial<Job>): number {
+export function scoreBusinessImpact(job: Partial<Job>): number {
   const text = `${job.title || ''} ${job.description || ''}`.toLowerCase();
 
-  const outcomeKeywords = {
+  // Business outcome keywords (what impact they want)
+  const businessOutcomes = {
     revenue: [
       'leads',
       'lead capture',
@@ -229,16 +232,48 @@ export function scoreOutcomeClarity(job: Partial<Job>): number {
       'conversion rate',
       'bookings',
       'clients',
+      'generate',
     ],
-    efficiency: ['time saved', 'automate', 'streamline', 'reduce', 'faster', 'communications', 'communicate'],
-    growth: ['scale', 'grow', 'expand', 'increase', 'improve'],
-    metrics: ['tracking', 'analytics', 'reporting', 'kpi', 'metrics'],
+    efficiency: [
+      'save time',
+      'time saved',
+      'automate',
+      'streamline',
+      'reduce',
+      'faster',
+      'efficient',
+      'simplify',
+      'organize',
+      'manage',
+    ],
+    growth: ['scale', 'grow', 'expand', 'increase', 'improve', 'boost', 'enhance'],
+    metrics: ['track', 'tracking', 'analytics', 'reporting', 'kpi', 'metrics', 'measure'],
   };
+
+  // Technical-only red flags (no business context)
+  const technicalOnlyFlags = [
+    'need developer',
+    'need programmer',
+    'need coder',
+    'looking for developer',
+    'seeking developer',
+    'hire developer',
+    'react developer',
+    'javascript developer',
+    'node developer',
+    'must know',
+    'experience in',
+    'proficient in',
+    'expert in',
+    'skilled in',
+  ];
 
   let score = 0;
   const detectedOutcomes: string[] = [];
+  let hasTechnicalOnlyFlag = false;
 
-  for (const [category, keywords] of Object.entries(outcomeKeywords)) {
+  // Check for business outcomes
+  for (const [category, keywords] of Object.entries(businessOutcomes)) {
     for (const keyword of keywords) {
       if (text.includes(keyword)) {
         score += 5; // 5 points per category (4 categories = up to 20)
@@ -248,14 +283,46 @@ export function scoreOutcomeClarity(job: Partial<Job>): number {
     }
   }
 
-  // Bonus for timeline mentions
-  if (/\b\d+\s*(week|month|day)s?\b/.test(text) || text.includes('timeline') || text.includes('flexible')) {
+  // Check for business context indicators
+  const businessContext = [
+    'our business',
+    'our company',
+    'our team',
+    'our clients',
+    'our customers',
+    'help us',
+    'we need',
+  ];
+
+  const hasBusinessContext = businessContext.some(phrase => text.includes(phrase));
+  if (hasBusinessContext) {
     score += 2;
-    detectedOutcomes.push('timeline mentioned');
+    detectedOutcomes.push('business context');
+  }
+
+  // Bonus for timeline mentions (shows planning)
+  if (/\b\d+\s*(week|month|day)s?\b/.test(text) || text.includes('timeline')) {
+    score += 1;
+    detectedOutcomes.push('timeline');
+  }
+
+  // Check for technical-only red flags
+  for (const flag of technicalOnlyFlags) {
+    if (text.includes(flag)) {
+      hasTechnicalOnlyFlag = true;
+      break;
+    }
+  }
+
+  // PENALTY: If technical-only job with no business outcomes
+  if (hasTechnicalOnlyFlag && detectedOutcomes.length === 0) {
+    score = 0; // Zero points for pure "need a developer" posts
+    detectedOutcomes.push('⚠️ technical-only (no business context)');
   }
 
   // Store detected outcomes
   (job as any).detectedOutcomes = detectedOutcomes;
+  (job as any).isTechnicalOnly = hasTechnicalOnlyFlag && detectedOutcomes.length <= 1;
 
   return Math.min(score, 15); // Cap at 15
 }

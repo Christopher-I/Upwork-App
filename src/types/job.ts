@@ -78,6 +78,7 @@ export interface Job {
   matchedKeywords: string[];
   detectedOutcomes: string[];
   detectedRedFlags?: string[];
+  isTechnicalOnly?: boolean;
 
   // AI proposal
   proposal?: {
@@ -120,7 +121,7 @@ export interface ScoreBreakdown {
     weLanguage: number;
     subtotal: number;
   };
-  outcomeClarity: number;
+  businessImpact: number;
   jobClarity: number;
   ehrPotential: number;
   redFlags: number;
