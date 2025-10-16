@@ -75,7 +75,7 @@ export interface PricingBand {
 
 export const DEFAULT_SETTINGS: Settings = {
   keywords: {
-    wideNet: ['website redesign', 'new website', 'landing page'],
+    wideNet: ['website redesign', 'new website', 'landing page', 'lead generation', 'lead capture'],
     webflow: ['webflow', 'web flow', 'webflo'],
     portals: [
       'client portal',

@@ -220,10 +220,13 @@ export function scoreOutcomeClarity(job: Partial<Job>): number {
   const outcomeKeywords = {
     revenue: [
       'leads',
+      'lead capture',
+      'lead generation',
       'sales',
       'revenue',
       'customers',
       'conversions',
+      'conversion rate',
       'bookings',
       'clients',
     ],
@@ -238,7 +241,7 @@ export function scoreOutcomeClarity(job: Partial<Job>): number {
   for (const [category, keywords] of Object.entries(outcomeKeywords)) {
     for (const keyword of keywords) {
       if (text.includes(keyword)) {
-        score += 4; // Up to 16 possible
+        score += 5; // 5 points per category (4 categories = up to 20)
         detectedOutcomes.push(keyword);
         break; // Only count each category once
       }
@@ -246,8 +249,8 @@ export function scoreOutcomeClarity(job: Partial<Job>): number {
   }
 
   // Bonus for timeline mentions
-  if (/\b\d+\s*(week|month|day)s?\b/.test(text)) {
-    score += 3;
+  if (/\b\d+\s*(week|month|day)s?\b/.test(text) || text.includes('timeline') || text.includes('flexible')) {
+    score += 2;
     detectedOutcomes.push('timeline mentioned');
   }
 
@@ -297,6 +300,12 @@ export function scoreScopeFit(job: Partial<Job>): number {
     'requirements',
     'specifications',
     'deliverables',
+    'forms',
+    'responsive',
+    'mobile',
+    'clean',
+    'modern',
+    'professional',
   ];
 
   let technicalMatches = 0;
@@ -323,11 +332,12 @@ export function scoreScopeFit(job: Partial<Job>): number {
     total: totalMatches,
   };
 
-  // Score based on scope clarity
-  if (totalMatches >= 5) return 15; // Very clear scope
-  if (totalMatches >= 3) return 12; // Good scope definition
-  if (totalMatches >= 2) return 9; // Some clarity
-  if (totalMatches >= 1) return 6; // Minimal definition
+  // Score based on scope clarity (more generous)
+  if (totalMatches >= 6) return 15; // Very clear scope
+  if (totalMatches >= 4) return 14; // Clear scope
+  if (totalMatches >= 3) return 13; // Good scope definition
+  if (totalMatches >= 2) return 10; // Some clarity
+  if (totalMatches >= 1) return 7; // Minimal definition
   return 3; // Vague request
 }
 

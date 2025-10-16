@@ -128,10 +128,10 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                 details={[
                   `Payment verified: ${
                     job.scoreBreakdown?.clientQuality?.paymentVerified || 0
-                  }/10`,
+                  }/15`,
                   `Spend history: ${
                     job.scoreBreakdown?.clientQuality?.spendHistory || 0
-                  }/10`,
+                  }/5`,
                   `Recency: ${
                     job.scoreBreakdown?.clientQuality?.recencyAndCompetition ||
                     0
@@ -183,7 +183,7 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                 score={job.scoreBreakdown?.ehrPotential || 0}
                 max={15}
                 details={[
-                  `Est: $${job.estimatedPrice} ÷ ${job.estimatedHours}hrs = $${job.estimatedEHR}/hr`,
+                  `Est: $${job.estimatedPrice} ÷ ${job.estimatedHours}hrs = $${Math.round(job.estimatedEHR)}/hr`,
                 ]}
               />
               {job.scoreBreakdown?.redFlags !== 0 && (
