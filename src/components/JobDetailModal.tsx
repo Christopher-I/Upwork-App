@@ -139,7 +139,7 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
       <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-lg">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 z-10">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">
                 {job.title}
@@ -152,13 +152,26 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                 <span>{job.client.location}</span>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-3xl leading-none ml-4 w-8 h-8 flex items-center justify-center"
-              aria-label="Close modal"
-            >
-              ×
-            </button>
+            <div className="flex items-center gap-2">
+              <a
+                href={currentJob.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors flex items-center gap-2"
+              >
+                <span>View on Upwork</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 text-3xl leading-none w-8 h-8 flex items-center justify-center"
+                aria-label="Close modal"
+              >
+                ×
+              </button>
+            </div>
           </div>
         </div>
 

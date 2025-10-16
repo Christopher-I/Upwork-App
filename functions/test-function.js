@@ -10,8 +10,8 @@ const functionUrl = 'https://us-central1-upwork-monitor-app.cloudfunctions.net/f
 const testData = {
   data: {
     keywords: {
-      wideNet: ['React', 'Node.js'],
-      webflow: [],
+      wideNet: ['React OR Node.js OR Vue OR Angular'],
+      webflow: ['Webflow OR web design'],
       portals: [],
       ecommerce: [],
       speedSEO: [],

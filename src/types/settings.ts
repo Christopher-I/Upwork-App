@@ -23,6 +23,12 @@ export interface Settings {
     maxProposals: number;
     posted: 'last_24h' | 'last_48h' | 'last_7_days' | 'last_14_days' | 'last_30_days';
     location: string[];
+    usOnly: boolean;
+    englishOnly: boolean;
+    excludeWordPress: boolean;
+    excludeHiredJobs: boolean;
+    minClientRating: number;
+    minHourlyRate: number;
     sortBy: string;
   };
 
@@ -75,43 +81,33 @@ export interface PricingBand {
 
 export const DEFAULT_SETTINGS: Settings = {
   keywords: {
-    wideNet: ['website redesign', 'new website', 'landing page', 'lead generation', 'lead capture'],
-    webflow: ['webflow', 'web flow', 'webflo'],
+    wideNet: [
+      'website redesign OR new website OR landing page',
+      'React OR Vue OR Angular OR Next.js',
+      'web development OR full stack',
+    ],
+    webflow: ['webflow OR web flow OR webflo'],
     portals: [
-      'client portal',
-      'customer portal',
-      'member area',
-      'membership site',
-      'dashboard',
-      'secure login',
-      'file sharing',
+      'client portal OR customer portal OR member portal',
+      'membership site OR member area OR dashboard',
+      'secure login OR file sharing',
     ],
     ecommerce: [
-      'shopify speed',
-      'checkout optimization',
-      'online booking',
-      'appointment scheduling',
-      'subscription payments',
+      'shopify speed OR shopify optimization',
+      'checkout optimization OR conversion optimization',
+      'online booking OR appointment scheduling',
     ],
     speedSEO: [
-      'core web vitals',
-      'page speed',
-      'conversion rate optimization',
-      'A/B testing',
+      'core web vitals OR page speed OR site speed',
+      'conversion rate optimization OR CRO OR A/B testing',
     ],
     automation: [
-      'zapier',
-      'make',
-      'integromat',
-      'gohighlevel',
-      'GHL',
-      'crm integration',
+      'zapier OR make OR integromat',
+      'gohighlevel OR GHL OR crm integration',
     ],
     vertical: [
-      'video production portal',
-      'clinic portal',
-      'patient portal',
-      'contractor website',
+      'video production portal OR clinic portal',
+      'patient portal OR contractor website',
     ],
   },
 
@@ -137,9 +133,15 @@ export const DEFAULT_SETTINGS: Settings = {
     paymentVerified: true,
     clientHistory: 'has_spend_or_hires',
     experienceLevel: ['intermediate', 'expert'],
-    maxProposals: 5,
+    maxProposals: 20,
     posted: 'last_7_days',
     location: ['US'],
+    usOnly: true,
+    englishOnly: true,
+    excludeWordPress: true,
+    excludeHiredJobs: true,
+    minClientRating: 4,
+    minHourlyRate: 20,
     sortBy: 'newest',
   },
 

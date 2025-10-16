@@ -203,6 +203,163 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
                     ))}
                   </div>
                 </div>
+
+                {/* US Only Clients */}
+                <div className="mb-6">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.platformFilters.usOnly}
+                      onChange={(e) =>
+                        setLocalSettings({
+                          ...localSettings,
+                          platformFilters: {
+                            ...localSettings.platformFilters,
+                            usOnly: e.target.checked,
+                          },
+                        })
+                      }
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm font-medium text-gray-700">
+                      Only US-based clients
+                    </span>
+                  </label>
+                  <p className="mt-1 ml-6 text-xs text-gray-500">
+                    Exclude jobs from clients outside the United States
+                  </p>
+                </div>
+
+                {/* English Only */}
+                <div className="mb-6">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.platformFilters.englishOnly}
+                      onChange={(e) =>
+                        setLocalSettings({
+                          ...localSettings,
+                          platformFilters: {
+                            ...localSettings.platformFilters,
+                            englishOnly: e.target.checked,
+                          },
+                        })
+                      }
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm font-medium text-gray-700">
+                      Only English jobs
+                    </span>
+                  </label>
+                  <p className="mt-1 ml-6 text-xs text-gray-500">
+                    Exclude jobs with non-English descriptions (80%+ Latin characters)
+                  </p>
+                </div>
+
+                {/* Exclude WordPress */}
+                <div className="mb-6">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.platformFilters.excludeWordPress}
+                      onChange={(e) =>
+                        setLocalSettings({
+                          ...localSettings,
+                          platformFilters: {
+                            ...localSettings.platformFilters,
+                            excludeWordPress: e.target.checked,
+                          },
+                        })
+                      }
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm font-medium text-gray-700">
+                      Exclude WordPress jobs
+                    </span>
+                  </label>
+                  <p className="mt-1 ml-6 text-xs text-gray-500">
+                    Excludes WordPress jobs (allows conversion/migration projects)
+                  </p>
+                </div>
+
+                {/* Exclude Hired Jobs */}
+                <div className="mb-6">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.platformFilters.excludeHiredJobs}
+                      onChange={(e) =>
+                        setLocalSettings({
+                          ...localSettings,
+                          platformFilters: {
+                            ...localSettings.platformFilters,
+                            excludeHiredJobs: e.target.checked,
+                          },
+                        })
+                      }
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm font-medium text-gray-700">
+                      Exclude jobs that have already hired
+                    </span>
+                  </label>
+                  <p className="mt-1 ml-6 text-xs text-gray-500">
+                    Only show jobs with open positions
+                  </p>
+                </div>
+
+                {/* Min Client Rating */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Minimum Client Rating (stars)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="0.5"
+                    value={localSettings.platformFilters.minClientRating}
+                    onChange={(e) =>
+                      setLocalSettings({
+                        ...localSettings,
+                        platformFilters: {
+                          ...localSettings.platformFilters,
+                          minClientRating: parseFloat(e.target.value),
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Clients with no reviews are always included
+                  </p>
+                </div>
+
+                {/* Min Hourly Rate */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Minimum Hourly Rate ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="200"
+                    value={localSettings.platformFilters.minHourlyRate}
+                    onChange={(e) =>
+                      setLocalSettings({
+                        ...localSettings,
+                        platformFilters: {
+                          ...localSettings.platformFilters,
+                          minHourlyRate: parseInt(e.target.value),
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Exclude hourly jobs below this rate (fixed-price jobs always included)
+                  </p>
+                </div>
               </div>
             </div>
           )}

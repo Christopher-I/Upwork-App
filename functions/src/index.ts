@@ -122,38 +122,22 @@ async function fetchJobsForSearch(
   const graphql = new Graphql(apiClient);
 
   try {
-    // Map experience levels to Upwork format
-    const experienceLevelMap: Record<string, string> = {
-      entry: 'ENTRY_LEVEL',
-      intermediate: 'INTERMEDIATE',
-      expert: 'EXPERT',
-    };
-    const mappedExperience = filters.experienceLevel.map(
-      (level) => experienceLevelMap[level] || level.toUpperCase()
-    );
-
     // Make GraphQL request using Upwork OAuth2 client's Graphql router
     const response: any = await new Promise((resolve, reject) => {
-        // Build search terms - split searchTerm into individual words for andTerms_all
-        const searchWords = searchTerm
-          .toLowerCase()
-          .split(/[\s,]+/)
-          .filter(word => word.length > 2)
-          .map(word => `"${word}"`);
+        // Build title expression with OR operators for multiple keywords
+        // This allows jobs matching ANY of the keywords
+        const titleExpression = searchTerm || '';
 
-        // Build filters object for marketplaceJobPostings
-        const filtersPart = searchWords.length > 0 ? `
-          filters: {
-            andTerms_all: [${searchWords.join(', ')}]
-          }
-        ` : '';
-
+        // Use marketplaceJobPostingsSearch (not marketplaceJobPostings) for search functionality
         const fullQuery = `
           query {
-            marketplaceJobPostings(
+            marketplaceJobPostingsSearch(
+              marketPlaceJobFilter: {
+                titleExpression_eq: "${titleExpression}"
+                pagination_eq: { first: 50, after: "0" }
+              }
               searchType: USER_JOBS_SEARCH
-              sortAttributes: { field: RECENCY }
-              ${filtersPart}
+              sortAttributes: [{ field: RECENCY }]
             ) {
               edges {
                 node {
@@ -175,6 +159,8 @@ async function fetchJobsForSearch(
                   category
                   subcategory
                   totalApplicants
+                  freelancersToHire
+                  totalFreelancersToHire
                   hourlyBudgetMin {
                     rawValue
                     currency
@@ -246,12 +232,12 @@ async function fetchJobsForSearch(
         });
       });
 
-    if (!response || !response.data || !response.data.marketplaceJobPostings) {
+    if (!response || !response.data || !response.data.marketplaceJobPostingsSearch) {
       console.error('Invalid response structure:', JSON.stringify(response));
       throw new Error('Invalid response from Upwork GraphQL API');
     }
 
-    const data: any = response.data.marketplaceJobPostings;
+    const data: any = response.data.marketplaceJobPostingsSearch;
     jobs.push(...data.edges.map((edge: any) => edge.node));
 
     console.log(`Fetched ${jobs.length} jobs`);
@@ -369,11 +355,148 @@ export const fetchUpworkJobs = functions.https.onCall(
       console.log(`Total jobs fetched: ${allJobs.length}`);
 
       // Remove duplicates
-      const uniqueJobs = Array.from(
+      let uniqueJobs = Array.from(
         new Map(allJobs.map((job) => [job.id, job])).values()
       );
 
       console.log(`Unique jobs after deduplication: ${uniqueJobs.length}`);
+
+      // Apply client-side filters
+
+      // Filter by max proposals
+      if (filters.maxProposals && filters.maxProposals > 0) {
+        uniqueJobs = uniqueJobs.filter(
+          (job) => (job.totalApplicants || 0) <= filters.maxProposals
+        );
+        console.log(`After maxProposals filter (<= ${filters.maxProposals}): ${uniqueJobs.length}`);
+      }
+
+      // Filter by US-only clients (client must be based in the US)
+      if (filters.usOnly) {
+        uniqueJobs = uniqueJobs.filter(
+          (job) => job.client?.location?.country === 'United States'
+        );
+        console.log(`After US-only client filter: ${uniqueJobs.length}`);
+      }
+
+      // Filter by English-only (check if description is in English)
+      // For now, we'll use a simple heuristic: jobs with mostly English characters
+      if (filters.englishOnly) {
+        uniqueJobs = uniqueJobs.filter((job) => {
+          const description = job.description || '';
+          const title = job.title || '';
+          const text = (title + ' ' + description).toLowerCase();
+
+          // Check if text contains mostly Latin characters (a-z)
+          // and common English words
+          const latinChars = (text.match(/[a-z]/g) || []).length;
+          const totalChars = text.replace(/\s/g, '').length;
+
+          // If at least 80% of characters are Latin, consider it English
+          return totalChars > 0 && (latinChars / totalChars) >= 0.8;
+        });
+        console.log(`After English-only filter: ${uniqueJobs.length}`);
+      }
+
+      // Filter by client rating (exclude clients with < 4 stars, but allow clients with no reviews)
+      uniqueJobs = uniqueJobs.filter((job) => {
+        const rating = job.client?.totalFeedback || 0;
+        const reviewCount = job.client?.totalReviews || 0;
+
+        // If no reviews (reviewCount = 0), include the job
+        if (reviewCount === 0) {
+          return true;
+        }
+
+        // If has reviews, rating must be >= 4.0
+        return rating >= 4.0;
+      });
+      console.log(`After client rating filter (>= 4 stars or no reviews): ${uniqueJobs.length}`);
+
+      // Exclude jobs that have already hired freelancers
+      uniqueJobs = uniqueJobs.filter((job) => {
+        // If freelancersToHire is 0, it means all positions are filled
+        const freelancersToHire = job.freelancersToHire || 0;
+        const totalFreelancersToHire = job.totalFreelancersToHire || 1;
+
+        // If they need freelancers and still have openings, include it
+        // If freelancersToHire is 0 and totalFreelancersToHire > 0, it means they've hired everyone
+        if (totalFreelancersToHire > 0 && freelancersToHire === 0) {
+          return false; // Exclude - all positions filled
+        }
+
+        return true; // Include - still has openings
+      });
+      console.log(`After excluding hired jobs: ${uniqueJobs.length}`);
+
+      // Exclude jobs less than $20/hr (only for hourly jobs)
+      uniqueJobs = uniqueJobs.filter((job) => {
+        // Check if job has an hourly budget
+        const hourlyMax = job.hourlyBudgetMax?.rawValue
+          ? parseFloat(job.hourlyBudgetMax.rawValue)
+          : 0;
+
+        // If hourly budget exists and is less than $20, exclude it
+        if (hourlyMax > 0 && hourlyMax < 20) {
+          return false;
+        }
+
+        // For fixed price or open budget jobs, include them (we can't determine hourly rate)
+        return true;
+      });
+      console.log(`After excluding jobs < $20/hr: ${uniqueJobs.length}`);
+
+      // Exclude WordPress jobs (check title and description)
+      // BUT allow jobs about converting/migrating FROM WordPress to other platforms
+      uniqueJobs = uniqueJobs.filter((job) => {
+        const title = (job.title || '').toLowerCase();
+        const description = (job.description || '').toLowerCase();
+        const text = title + ' ' + description;
+
+        // WordPress keywords to check
+        const wordpressKeywords = [
+          'wordpress',
+          'word press',
+          'wp ',
+          ' wp',
+          'woocommerce',
+          'elementor',
+          'divi',
+          'gutenberg',
+          'wpbakery',
+          'wp-',
+        ];
+
+        // Check if job mentions WordPress
+        const hasWordPress = wordpressKeywords.some(keyword => text.includes(keyword));
+
+        // If no WordPress mentioned, include it
+        if (!hasWordPress) {
+          return true;
+        }
+
+        // If WordPress is mentioned, check if it's about conversion/migration
+        const conversionKeywords = [
+          'convert',
+          'migrate',
+          'migration',
+          'move from',
+          'switch from',
+          'replace wordpress',
+          'from wordpress',
+          'away from wordpress',
+          'instead of wordpress',
+          'wordpress to',
+          'rebuild',
+          'redesign from wordpress',
+        ];
+
+        const isConversion = conversionKeywords.some(keyword => text.includes(keyword));
+
+        // Include if it's a conversion job, exclude if it's a regular WordPress job
+        return isConversion;
+      });
+      console.log(`After WordPress exclusion filter (allowing conversions): ${uniqueJobs.length}`);
 
       return {
         jobs: uniqueJobs,

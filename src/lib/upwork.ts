@@ -241,17 +241,21 @@ export function transformUpworkJob(upworkJob: any): Partial<Job> {
 
   // Parse budget from different formats
   let budget = 0;
-  let budgetType = 'negotiable';
+  let budgetType: 'fixed' | 'hourly' | 'negotiable' = 'negotiable';
+  let budgetIsPlaceholder = false;
 
-  if (upworkJob.amount && upworkJob.amount.rawValue) {
+  if (upworkJob.amount && upworkJob.amount.rawValue && parseFloat(upworkJob.amount.rawValue) > 0) {
     budget = parseFloat(upworkJob.amount.rawValue);
     budgetType = 'fixed';
-  } else if (upworkJob.hourlyBudgetMax && upworkJob.hourlyBudgetMax.rawValue) {
+  } else if (upworkJob.hourlyBudgetMax && upworkJob.hourlyBudgetMax.rawValue && parseFloat(upworkJob.hourlyBudgetMax.rawValue) > 0) {
     budget = parseFloat(upworkJob.hourlyBudgetMax.rawValue);
     budgetType = 'hourly';
-  } else if (upworkJob.budget?.amount) {
+  } else if (upworkJob.budget?.amount && upworkJob.budget.amount > 0) {
     budget = upworkJob.budget.amount;
     budgetType = upworkJob.budget.type?.toLowerCase() || 'negotiable';
+  } else {
+    // No budget set - this is an "open budget" job
+    budgetIsPlaceholder = true;
   }
 
   // Build URL from ciphertext or id
@@ -270,7 +274,7 @@ export function transformUpworkJob(upworkJob: any): Partial<Job> {
 
     budget,
     budgetType,
-    budgetIsPlaceholder: budget === 0,
+    budgetIsPlaceholder,
 
     client: {
       id: upworkJob.client?.id || 'unknown',

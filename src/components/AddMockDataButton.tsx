@@ -3,7 +3,7 @@ import { clearAllJobs } from '../utils/clearJobs';
 import { transformUpworkJob } from '../lib/upwork';
 import { calculateJobScore, applyHardFilters } from '../utils/scoring';
 import { useSettings } from '../hooks/useSettings';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -30,6 +30,8 @@ export function AddMockDataButton() {
           maxProposals: settings.platformFilters.maxProposals,
           experienceLevel: settings.platformFilters.experienceLevel,
           paymentVerified: settings.platformFilters.paymentVerified,
+          usOnly: settings.platformFilters.usOnly,
+          englishOnly: settings.platformFilters.englishOnly,
         },
       });
 
@@ -38,9 +40,23 @@ export function AddMockDataButton() {
 
       // Transform and score each job
       let savedCount = 0;
+      let skippedCount = 0;
       for (const upworkJob of data.jobs) {
         try {
           const transformedJob = transformUpworkJob(upworkJob);
+
+          // Check if job already exists by upworkId
+          const existingJobQuery = query(
+            collection(db, 'jobs'),
+            where('upworkId', '==', transformedJob.upworkId)
+          );
+          const existingJobs = await getDocs(existingJobQuery);
+
+          if (!existingJobs.empty) {
+            console.log(`⏭️  Skipping duplicate: ${transformedJob.title}`);
+            skippedCount++;
+            continue;
+          }
 
           // Score the job using AI
           const { total, breakdown } = await calculateJobScore(transformedJob, settings, true);
@@ -74,7 +90,10 @@ export function AddMockDataButton() {
         }
       }
 
-      console.log(`\n✅ Saved ${savedCount} jobs to Firestore`);
+      console.log(`\n✅ Saved ${savedCount} new jobs to Firestore`);
+      if (skippedCount > 0) {
+        console.log(`⏭️  Skipped ${skippedCount} duplicate jobs`);
+      }
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (error: any) {

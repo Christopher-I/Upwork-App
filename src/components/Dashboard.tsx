@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useJobs, useJobCounts } from '../hooks/useJobs';
 import { useSettings } from '../hooks/useSettings';
 import { JobCard } from './JobCard';
 import { JobDetailModal } from './JobDetailModal';
 import { AddMockDataButton } from './AddMockDataButton';
 import { SettingsPanel } from './SettingsPanel';
+import { JobFilters, FilterOptions } from './JobFilters';
 import { Job } from '../types/job';
 
 type TabType = 'recommended' | 'applied' | 'all';
@@ -13,11 +14,119 @@ export function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('recommended');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [filters, setFilters] = useState<FilterOptions>({
+    budgetType: 'all',
+    minBudget: 0,
+    maxBudget: 0,
+    minProposals: 0,
+    maxProposals: 0,
+    teamLanguage: 'all',
+    experienceLevel: 'all',
+    paymentVerified: 'all',
+    sortBy: 'score_high',
+  });
 
   const { settings, updateSettings } = useSettings();
 
-  const { jobs, loading } = useJobs(activeTab);
+  const { jobs: rawJobs, loading } = useJobs(activeTab);
   const counts = useJobCounts();
+
+  // Apply filters and sorting
+  const jobs = useMemo(() => {
+    if (activeTab !== 'all') return rawJobs;
+
+    let filtered = [...rawJobs];
+
+    // Budget type filter
+    if (filters.budgetType !== 'all') {
+      if (filters.budgetType === 'open') {
+        // Open budget means no price set (budget = 0 or budgetIsPlaceholder = true)
+        filtered = filtered.filter(
+          (job) => job.budget === 0 || job.budgetIsPlaceholder === true
+        );
+      } else {
+        filtered = filtered.filter((job) => job.budgetType === filters.budgetType);
+      }
+    }
+
+    // Budget range filter
+    if (filters.minBudget > 0) {
+      filtered = filtered.filter((job) => job.budget >= filters.minBudget);
+    }
+    if (filters.maxBudget > 0) {
+      filtered = filtered.filter((job) => job.budget <= filters.maxBudget);
+    }
+
+    // Proposals range filter
+    if (filters.minProposals > 0) {
+      filtered = filtered.filter(
+        (job) => job.proposalsCount >= filters.minProposals
+      );
+    }
+    if (filters.maxProposals > 0) {
+      filtered = filtered.filter(
+        (job) => job.proposalsCount <= filters.maxProposals
+      );
+    }
+
+    // Team language filter
+    if (filters.teamLanguage === 'team') {
+      filtered = filtered.filter(
+        (job) =>
+          job.languageAnalysis &&
+          (job.languageAnalysis.weCount > 0 ||
+            job.languageAnalysis.ourCount > 0 ||
+            job.languageAnalysis.teamMentions > 0)
+      );
+    } else if (filters.teamLanguage === 'solo') {
+      filtered = filtered.filter(
+        (job) =>
+          job.languageAnalysis &&
+          (job.languageAnalysis.iCount > 0 ||
+            job.languageAnalysis.myCount > 0 ||
+            job.languageAnalysis.meMentions > 0)
+      );
+    }
+
+    // Experience level filter
+    if (filters.experienceLevel !== 'all') {
+      filtered = filtered.filter(
+        (job) => job.experienceLevel === filters.experienceLevel
+      );
+    }
+
+    // Payment verified filter
+    if (filters.paymentVerified === 'yes') {
+      filtered = filtered.filter((job) => job.client.paymentVerified);
+    } else if (filters.paymentVerified === 'no') {
+      filtered = filtered.filter((job) => !job.client.paymentVerified);
+    }
+
+    // Sorting
+    switch (filters.sortBy) {
+      case 'price_low':
+        filtered.sort((a, b) => a.budget - b.budget);
+        break;
+      case 'price_high':
+        filtered.sort((a, b) => b.budget - a.budget);
+        break;
+      case 'score_high':
+        filtered.sort((a, b) => b.score - a.score);
+        break;
+      case 'proposals_low':
+        filtered.sort((a, b) => a.proposalsCount - b.proposalsCount);
+        break;
+      case 'newest':
+      default:
+        filtered.sort(
+          (a, b) =>
+            new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
+        );
+        break;
+    }
+
+    return filtered;
+  }, [rawJobs, filters, activeTab]);
 
   // Wrapper to handle full settings save
   const handleSaveSettings = async (newSettings: any) => {
@@ -95,6 +204,11 @@ export function Dashboard() {
             All Jobs
           </TabButton>
         </div>
+
+        {/* Filters - Only show on All Jobs tab */}
+        {activeTab === 'all' && (
+          <JobFilters filters={filters} onFilterChange={setFilters} />
+        )}
 
         {/* Jobs Grid */}
         {loading ? (
