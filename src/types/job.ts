@@ -63,10 +63,10 @@ export interface Job {
   estimatedHours: number;
   estimatedEHR: number;
 
-  // Scope clarity analysis
-  scopeClarity: {
+  // Job clarity analysis (how well-defined is the posting?)
+  jobClarity: {
     technicalMatches: number;
-    scopeMatches: number;
+    clarityMatches: number;
     total: number;
   };
 
@@ -121,7 +121,7 @@ export interface ScoreBreakdown {
     subtotal: number;
   };
   outcomeClarity: number;
-  scopeFit: number;
+  jobClarity: number;
   ehrPotential: number;
   redFlags: number;
 }

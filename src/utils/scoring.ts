@@ -13,7 +13,7 @@ export function calculateJobScore(
     keywordsMatch: scoreKeywordsMatch(job, settings),
     professionalSignals: scoreProfessionalSignals(job),
     outcomeClarity: scoreOutcomeClarity(job),
-    scopeFit: scoreScopeFit(job),
+    jobClarity: scoreJobClarity(job),
     ehrPotential: scoreEHRPotential(job, settings),
     redFlags: scoreRedFlags(job),
   };
@@ -23,7 +23,7 @@ export function calculateJobScore(
     breakdown.keywordsMatch +
     breakdown.professionalSignals.subtotal +
     breakdown.outcomeClarity +
-    breakdown.scopeFit +
+    breakdown.jobClarity +
     breakdown.ehrPotential +
     breakdown.redFlags;
 
@@ -261,10 +261,11 @@ export function scoreOutcomeClarity(job: Partial<Job>): number {
 }
 
 /**
- * 5. Scope Fit (15 points)
- * Evaluates if the project scope is well-defined and matches your skills
+ * 5. Job Clarity (15 points)
+ * Evaluates how well-defined the job posting is
+ * More boxes ticked = more professional and prepared client
  */
-export function scoreScopeFit(job: Partial<Job>): number {
+export function scoreJobClarity(job: Partial<Job>): number {
   const text = `${job.title || ''} ${job.description || ''}`.toLowerCase();
 
   // Look for specific technical requirements (indicates clarity)
@@ -289,8 +290,8 @@ export function scoreScopeFit(job: Partial<Job>): number {
     'optimization',
   ];
 
-  // Look for scope definition signals
-  const scopeDefinitionSignals = [
+  // Look for clarity/definition signals (shows planning and preparation)
+  const claritySignals = [
     'pages', // e.g., "5 pages", "8-10 pages"
     'sections',
     'features',
@@ -309,7 +310,7 @@ export function scoreScopeFit(job: Partial<Job>): number {
   ];
 
   let technicalMatches = 0;
-  let scopeMatches = 0;
+  let clarityMatches = 0;
 
   for (const signal of technicalSignals) {
     if (text.includes(signal)) {
@@ -317,28 +318,28 @@ export function scoreScopeFit(job: Partial<Job>): number {
     }
   }
 
-  for (const signal of scopeDefinitionSignals) {
+  for (const signal of claritySignals) {
     if (text.includes(signal)) {
-      scopeMatches++;
+      clarityMatches++;
     }
   }
 
-  const totalMatches = technicalMatches + scopeMatches;
+  const totalMatches = technicalMatches + clarityMatches;
 
-  // Store scope clarity info
-  (job as any).scopeClarity = {
+  // Store job clarity info
+  (job as any).jobClarity = {
     technicalMatches,
-    scopeMatches,
+    clarityMatches,
     total: totalMatches,
   };
 
-  // Score based on scope clarity (more generous)
-  if (totalMatches >= 6) return 15; // Very clear scope
-  if (totalMatches >= 4) return 14; // Clear scope
-  if (totalMatches >= 3) return 13; // Good scope definition
-  if (totalMatches >= 2) return 10; // Some clarity
-  if (totalMatches >= 1) return 7; // Minimal definition
-  return 3; // Vague request
+  // Score based on job clarity (how many boxes ticked?)
+  if (totalMatches >= 6) return 15; // Very clear - client knows exactly what they want
+  if (totalMatches >= 4) return 14; // Clear - well thought out
+  if (totalMatches >= 3) return 13; // Good definition - decent clarity
+  if (totalMatches >= 2) return 10; // Some clarity - basic idea
+  if (totalMatches >= 1) return 7; // Minimal - vague request
+  return 3; // Too vague - avoid
 }
 
 /**

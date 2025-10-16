@@ -170,12 +170,13 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                 ]}
               />
               <ScoreItem
-                label="Scope Fit"
-                score={job.scoreBreakdown?.scopeFit || 0}
+                label="Job Clarity"
+                score={job.scoreBreakdown?.jobClarity || 0}
                 max={15}
                 details={[
-                  `Technical signals: ${job.scopeClarity?.technicalMatches || 0}`,
-                  `Scope definition: ${job.scopeClarity?.scopeMatches || 0}`,
+                  `Technical signals: ${job.jobClarity?.technicalMatches || 0}`,
+                  `Clarity signals: ${job.jobClarity?.clarityMatches || 0}`,
+                  `Total boxes ticked: ${job.jobClarity?.total || 0}`,
                 ]}
               />
               <ScoreItem
