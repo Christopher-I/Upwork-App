@@ -31,6 +31,8 @@ export interface Job {
   proposalsCount: number;
   category: string;
   experienceLevel: string;
+  freelancersToHire?: number;
+  totalFreelancersToHire?: number;
 
   // Scoring
   score: number;

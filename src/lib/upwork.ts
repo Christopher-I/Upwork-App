@@ -292,6 +292,8 @@ export function transformUpworkJob(upworkJob: any): Partial<Job> {
     proposalsCount: upworkJob.totalApplicants || upworkJob.proposals?.total || 0,
     category: upworkJob.category || upworkJob.category?.name || 'Unknown',
     experienceLevel: (upworkJob.experienceLevel || 'intermediate').toLowerCase(),
+    freelancersToHire: upworkJob.freelancersToHire,
+    totalFreelancersToHire: upworkJob.totalFreelancersToHire,
 
     status: 'fetched',
     applied: false,

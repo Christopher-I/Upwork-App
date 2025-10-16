@@ -75,6 +75,21 @@ export function Dashboard() {
       });
     }
 
+    // ALWAYS exclude hired jobs (applies to all tabs)
+    filtered = filtered.filter((job) => {
+      // If job has hiring info, check if positions are still available
+      if (job.freelancersToHire !== undefined && job.totalFreelancersToHire !== undefined) {
+        const freelancersToHire = job.freelancersToHire || 0;
+        const totalFreelancersToHire = job.totalFreelancersToHire || 1;
+
+        // If all positions filled (freelancersToHire = 0 and totalFreelancersToHire > 0), exclude
+        if (totalFreelancersToHire > 0 && freelancersToHire === 0) {
+          return false;
+        }
+      }
+      return true;
+    });
+
     // Only apply additional filters on "all" tab
     if (activeTab !== 'all') return filtered;
 
