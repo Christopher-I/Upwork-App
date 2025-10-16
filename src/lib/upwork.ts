@@ -12,23 +12,45 @@ const client = new GraphQLClient(UPWORK_GRAPHQL_ENDPOINT, {
 });
 
 /**
- * GraphQL query for job search
- *
- * Note: Limited to LAST_7_DAYS to reduce ChatGPT API calls on scoring.
- * Jobs older than 7 days are less likely to be available anyway.
+ * Build GraphQL query for job search with dynamic filters
+ * Note: Time window setting helps control ChatGPT API usage
  */
-const JOB_SEARCH_QUERY = `
+function buildJobSearchQuery(
+  posted: string,
+  maxProposals: number,
+  experienceLevel: string[],
+  paymentVerified: boolean
+): string {
+  // Map settings format to Upwork API format
+  const postedMap: Record<string, string> = {
+    last_24h: 'LAST_24_HOURS',
+    last_48h: 'LAST_24_48_HOURS',
+    last_7_days: 'LAST_7_DAYS',
+    last_14_days: 'LAST_14_DAYS',
+    last_30_days: 'LAST_30_DAYS',
+  };
+
+  const experienceLevelMap: Record<string, string> = {
+    entry: 'ENTRY',
+    intermediate: 'INTERMEDIATE',
+    expert: 'EXPERT',
+  };
+
+  const mappedPosted = postedMap[posted] || 'LAST_7_DAYS';
+  const mappedExperience = experienceLevel.map((level) => experienceLevelMap[level] || level.toUpperCase());
+
+  return `
   query JobSearch($query: String!, $first: Int!, $after: String) {
     marketplaceJobPostings(
       search: { query: $query }
       pagination: { first: $first, after: $after }
       sort: { field: CREATE_TIME, sortOrder: DESC }
       filters: {
-        paymentVerified: true
+        paymentVerified: ${paymentVerified}
         clientHistory: HAS_HIRES_OR_SPEND
-        experienceLevel: [INTERMEDIATE, EXPERT]
-        proposalsLessThan: 5
-        posted: LAST_7_DAYS
+        experienceLevel: [${mappedExperience.join(', ')}]
+        proposalsLessThan: ${maxProposals}
+        posted: ${mappedPosted}
         location: ["United States"]
       }
     ) {
@@ -78,21 +100,47 @@ const JOB_SEARCH_QUERY = `
     }
   }
 `;
+}
 
 /**
  * Fetch jobs for a specific search term
  */
-export async function fetchJobsForSearch(searchTerm: string): Promise<any[]> {
+export async function fetchJobsForSearch(
+  searchTerm: string,
+  filters?: {
+    posted: string;
+    maxProposals: number;
+    experienceLevel: string[];
+    paymentVerified: boolean;
+  }
+): Promise<any[]> {
   const jobs: any[] = [];
   let hasNextPage = true;
   let cursor: string | null = null;
   let pageCount = 0;
   const MAX_PAGES = 2; // Fetch max 2 pages (200 jobs) per search
 
+  // Use default filters if not provided
+  const defaultFilters = {
+    posted: 'last_7_days',
+    maxProposals: 5,
+    experienceLevel: ['intermediate', 'expert'],
+    paymentVerified: true,
+  };
+  const activeFilters = filters || defaultFilters;
+
+  // Build query with current filters
+  const query = buildJobSearchQuery(
+    activeFilters.posted,
+    activeFilters.maxProposals,
+    activeFilters.experienceLevel,
+    activeFilters.paymentVerified
+  );
+
   try {
     while (hasNextPage && pageCount < MAX_PAGES) {
       const response = await rateLimiter.throttle(async () => {
-        return await client.request(JOB_SEARCH_QUERY, {
+        return await client.request(query, {
           query: searchTerm,
           first: 100,
           after: cursor,

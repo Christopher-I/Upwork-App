@@ -21,7 +21,7 @@ export interface Settings {
     clientHistory: string;
     experienceLevel: string[];
     maxProposals: number;
-    posted: string;
+    posted: 'last_24h' | 'last_48h' | 'last_7_days' | 'last_14_days' | 'last_30_days';
     location: string[];
     sortBy: string;
   };
@@ -33,8 +33,8 @@ export interface Settings {
     clientQuality: number;
     keywordsMatch: number;
     professionalSignals: number;
-    outcomeClarity: number;
-    scopeFit: number;
+    businessImpact: number; // Was outcomeClarity
+    jobClarity: number; // Was scopeFit
     ehrPotential: number;
     redFlagPenalty: number;
   };
@@ -138,7 +138,7 @@ export const DEFAULT_SETTINGS: Settings = {
     clientHistory: 'has_spend_or_hires',
     experienceLevel: ['intermediate', 'expert'],
     maxProposals: 5,
-    posted: 'last_24_48h',
+    posted: 'last_7_days',
     location: ['US'],
     sortBy: 'newest',
   },
@@ -150,8 +150,8 @@ export const DEFAULT_SETTINGS: Settings = {
     clientQuality: 25,
     keywordsMatch: 15,
     professionalSignals: 10,
-    outcomeClarity: 15,
-    scopeFit: 15,
+    businessImpact: 15, // Was outcomeClarity
+    jobClarity: 15, // Was scopeFit
     ehrPotential: 15,
     redFlagPenalty: 10,
   },

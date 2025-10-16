@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useJobs, useJobCounts } from '../hooks/useJobs';
+import { useSettings } from '../hooks/useSettings';
 import { JobCard } from './JobCard';
 import { JobDetailModal } from './JobDetailModal';
 import { AddMockDataButton } from './AddMockDataButton';
+import { SettingsPanel } from './SettingsPanel';
 import { Job } from '../types/job';
 
 type TabType = 'recommended' | 'applied' | 'all';
@@ -10,6 +12,9 @@ type TabType = 'recommended' | 'applied' | 'all';
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('recommended');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+
+  const { settings, updateSettings } = useSettings();
 
   const { jobs, loading } = useJobs(activeTab);
   const counts = useJobCounts();
@@ -28,7 +33,15 @@ export function Dashboard() {
                 AI-powered job recommendations with proposals ready to send
               </p>
             </div>
-            <AddMockDataButton />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowSettings(true)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Settings
+              </button>
+              <AddMockDataButton />
+            </div>
           </div>
         </header>
 
@@ -117,6 +130,15 @@ export function Dashboard() {
           <JobDetailModal
             job={selectedJob}
             onClose={() => setSelectedJob(null)}
+          />
+        )}
+
+        {/* Settings Panel */}
+        {showSettings && (
+          <SettingsPanel
+            settings={settings}
+            onSave={updateSettings}
+            onClose={() => setShowSettings(false)}
           />
         )}
       </div>
