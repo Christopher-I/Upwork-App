@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { clearAllJobs } from '../utils/clearJobs';
 import { transformUpworkJob } from '../lib/upwork';
 import { calculateJobScore, applyHardFilters } from '../utils/scoring';
 import { useSettings } from '../hooks/useSettings';
-import { collection, addDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ConfirmModal } from './ConfirmModal';
@@ -34,6 +34,48 @@ function removeUndefined(obj: any): any {
   return obj;
 }
 
+/**
+ * Format time difference in a human-readable way
+ */
+function formatTimeDifference(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (diffHours > 0) {
+    return `${diffHours}h ${diffMinutes}m ago`;
+  } else if (diffMinutes > 0) {
+    return `${diffMinutes}m ago`;
+  } else {
+    return 'Just now';
+  }
+}
+
+/**
+ * Calculate time until next refresh (6 hours after last fetch)
+ */
+function getTimeUntilRefresh(lastFetch: Date): { ready: boolean; message: string } {
+  const now = new Date();
+  const sixHoursLater = new Date(lastFetch.getTime() + 6 * 60 * 60 * 1000);
+  const diffMs = sixHoursLater.getTime() - now.getTime();
+
+  if (diffMs <= 0) {
+    return { ready: true, message: 'Ready to refresh' };
+  }
+
+  const hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutesLeft = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (hoursLeft > 0) {
+    return { ready: false, message: `Next refresh in ${hoursLeft}h ${minutesLeft}m` };
+  } else if (minutesLeft > 0) {
+    return { ready: false, message: `Next refresh in ${minutesLeft}m` };
+  } else {
+    return { ready: true, message: 'Ready to refresh' };
+  }
+}
+
 export function AddMockDataButton() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -41,7 +83,49 @@ export function AddMockDataButton() {
   const [showClearModal, setShowClearModal] = useState(false);
   const [showFetchModal, setShowFetchModal] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const { settings } = useSettings();
+
+  // Update current time every minute for live refresh countdown
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Load last fetch time from localStorage and Firestore
+  useEffect(() => {
+    const loadLastFetchTime = async () => {
+      // Try localStorage first for immediate display
+      const savedTime = localStorage.getItem('lastFetchTime');
+      if (savedTime) {
+        setLastFetchTime(new Date(savedTime));
+      }
+
+      // Also check Firestore for most recent job
+      try {
+        const jobsQuery = query(
+          collection(db, 'jobs'),
+          orderBy('fetchedAt', 'desc'),
+          limit(1)
+        );
+        const snapshot = await getDocs(jobsQuery);
+        if (!snapshot.empty) {
+          const mostRecentJob = snapshot.docs[0].data();
+          const fetchedAt = mostRecentJob.fetchedAt?.toDate?.() || new Date(mostRecentJob.fetchedAt);
+          setLastFetchTime(fetchedAt);
+          localStorage.setItem('lastFetchTime', fetchedAt.toISOString());
+        }
+      } catch (error) {
+        console.error('Error loading last fetch time:', error);
+      }
+    };
+
+    loadLastFetchTime();
+  }, []);
 
   const handleFetchClick = () => {
     setShowFetchModal(true);
@@ -140,6 +224,12 @@ export function AddMockDataButton() {
       if (skippedCount > 0) {
         console.log(`⏭️  Skipped ${skippedCount} duplicate jobs`);
       }
+
+      // Update last fetch time
+      const now = new Date();
+      setLastFetchTime(now);
+      localStorage.setItem('lastFetchTime', now.toISOString());
+
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (error: any) {
@@ -209,6 +299,26 @@ export function AddMockDataButton() {
           )}
         </div>
       </div>
+
+      {/* Last Fetch Info */}
+      {lastFetchTime && !loading && (
+        <div className="mt-2 text-sm text-gray-600">
+          {(() => {
+            const refreshInfo = getTimeUntilRefresh(lastFetchTime);
+            return (
+              <div className="flex items-center gap-4">
+                <span>
+                  Last fetched: <span className="font-medium text-gray-900">{formatTimeDifference(lastFetchTime)}</span>
+                </span>
+                <span className="text-gray-300">•</span>
+                <span className={refreshInfo.ready ? 'text-success-600 font-medium' : 'text-gray-600'}>
+                  {refreshInfo.message}
+                </span>
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Clear All Confirmation Modal */}
       <ConfirmModal
