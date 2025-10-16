@@ -33,9 +33,18 @@ export function Dashboard() {
 
   // Apply filters and sorting
   const jobs = useMemo(() => {
-    if (activeTab !== 'all') return rawJobs;
-
     let filtered = [...rawJobs];
+
+    // ALWAYS filter out non-US clients by default (applies to all tabs)
+    filtered = filtered.filter((job) => {
+      const location = job.client?.location;
+      // Handle both string format and object format
+      const country = typeof location === 'string' ? location : location?.country;
+      return country === 'United States' || country === 'US' || country === 'USA';
+    });
+
+    // Only apply additional filters on "all" tab
+    if (activeTab !== 'all') return filtered;
 
     // Budget type filter
     if (filters.budgetType !== 'all') {
