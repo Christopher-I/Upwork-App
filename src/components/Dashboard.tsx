@@ -19,6 +19,11 @@ export function Dashboard() {
   const { jobs, loading } = useJobs(activeTab);
   const counts = useJobCounts();
 
+  // Wrapper to handle full settings save
+  const handleSaveSettings = async (newSettings: any) => {
+    await updateSettings(newSettings);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
@@ -137,7 +142,7 @@ export function Dashboard() {
         {showSettings && (
           <SettingsPanel
             settings={settings}
-            onSave={updateSettings}
+            onSave={handleSaveSettings}
             onClose={() => setShowSettings(false)}
           />
         )}
