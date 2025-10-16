@@ -13,6 +13,9 @@ const client = new GraphQLClient(UPWORK_GRAPHQL_ENDPOINT, {
 
 /**
  * GraphQL query for job search
+ *
+ * Note: Limited to LAST_7_DAYS to reduce ChatGPT API calls on scoring.
+ * Jobs older than 7 days are less likely to be available anyway.
  */
 const JOB_SEARCH_QUERY = `
   query JobSearch($query: String!, $first: Int!, $after: String) {
@@ -25,7 +28,7 @@ const JOB_SEARCH_QUERY = `
         clientHistory: HAS_HIRES_OR_SPEND
         experienceLevel: [INTERMEDIATE, EXPERT]
         proposalsLessThan: 5
-        posted: LAST_24_48_HOURS
+        posted: LAST_7_DAYS
         location: ["United States"]
       }
     ) {
