@@ -166,15 +166,23 @@ export async function fetchJobsForSearch(
 /**
  * Fetch jobs from all saved searches
  */
-export async function fetchAllJobs(keywords: {
-  wideNet: string[];
-  webflow: string[];
-  portals: string[];
-  ecommerce: string[];
-  speedSEO: string[];
-  automation: string[];
-  vertical: string[];
-}): Promise<any[]> {
+export async function fetchAllJobs(
+  keywords: {
+    wideNet: string[];
+    webflow: string[];
+    portals: string[];
+    ecommerce: string[];
+    speedSEO: string[];
+    automation: string[];
+    vertical: string[];
+  },
+  filters?: {
+    posted: string;
+    maxProposals: number;
+    experienceLevel: string[];
+    paymentVerified: boolean;
+  }
+): Promise<any[]> {
   const allSearches = [
     ...keywords.wideNet,
     ...keywords.webflow,
@@ -192,7 +200,7 @@ export async function fetchAllJobs(keywords: {
   // Batch 1: First 5 searches
   const batch1 = allSearches.slice(0, 5);
   const results1 = await Promise.all(
-    batch1.map((search) => fetchJobsForSearch(search))
+    batch1.map((search) => fetchJobsForSearch(search, filters))
   );
   allJobs.push(...results1.flat());
 
@@ -203,7 +211,7 @@ export async function fetchAllJobs(keywords: {
   if (allSearches.length > 5) {
     const batch2 = allSearches.slice(5, 10);
     const results2 = await Promise.all(
-      batch2.map((search) => fetchJobsForSearch(search))
+      batch2.map((search) => fetchJobsForSearch(search, filters))
     );
     allJobs.push(...results2.flat());
   }
@@ -213,7 +221,7 @@ export async function fetchAllJobs(keywords: {
     await new Promise((resolve) => setTimeout(resolve, 200));
     const batch3 = allSearches.slice(10);
     const results3 = await Promise.all(
-      batch3.map((search) => fetchJobsForSearch(search))
+      batch3.map((search) => fetchJobsForSearch(search, filters))
     );
     allJobs.push(...results3.flat());
   }
@@ -228,33 +236,58 @@ export async function fetchAllJobs(keywords: {
  * Transform Upwork API response to our Job type
  */
 export function transformUpworkJob(upworkJob: any): Partial<Job> {
+  // Handle both API formats: createdAt (old) and createdDateTime (new from Cloud Function)
+  const createdDate = upworkJob.createdDateTime || upworkJob.createdAt || upworkJob.publishedDateTime;
+
+  // Parse budget from different formats
+  let budget = 0;
+  let budgetType = 'negotiable';
+
+  if (upworkJob.amount && upworkJob.amount.rawValue) {
+    budget = parseFloat(upworkJob.amount.rawValue);
+    budgetType = 'fixed';
+  } else if (upworkJob.hourlyBudgetMax && upworkJob.hourlyBudgetMax.rawValue) {
+    budget = parseFloat(upworkJob.hourlyBudgetMax.rawValue);
+    budgetType = 'hourly';
+  } else if (upworkJob.budget?.amount) {
+    budget = upworkJob.budget.amount;
+    budgetType = upworkJob.budget.type?.toLowerCase() || 'negotiable';
+  }
+
+  // Build URL from ciphertext or id
+  const jobUrl = upworkJob.url ||
+                 (upworkJob.ciphertext ? `https://www.upwork.com/jobs/${upworkJob.ciphertext}` :
+                  `https://www.upwork.com/jobs/~${upworkJob.id}`);
+
   return {
     upworkId: upworkJob.id,
     title: upworkJob.title,
     description: upworkJob.description,
-    url: upworkJob.url || `https://www.upwork.com/jobs/${upworkJob.id}`,
+    url: jobUrl,
 
-    postedAt: new Date(upworkJob.createdAt),
+    postedAt: new Date(createdDate),
     fetchedAt: new Date(),
 
-    budget: upworkJob.budget?.amount || 0,
-    budgetType: upworkJob.budget?.type?.toLowerCase() || 'negotiable',
-    budgetIsPlaceholder: false, // Will be determined during scoring
+    budget,
+    budgetType,
+    budgetIsPlaceholder: budget === 0,
 
     client: {
-      id: upworkJob.client.id,
-      name: upworkJob.client.companyName || 'Anonymous',
-      paymentVerified: upworkJob.client.paymentVerified,
-      totalSpent: upworkJob.client.totalSpent || 0,
-      totalHires: upworkJob.client.totalHires || 0,
-      location: upworkJob.client.location?.country || 'Unknown',
-      rating: upworkJob.client.avgFeedback || 0,
-      reviewCount: upworkJob.client.totalFeedback || 0,
+      id: upworkJob.client?.id || 'unknown',
+      name: upworkJob.client?.companyName || 'Anonymous',
+      paymentVerified: upworkJob.client?.paymentVerified || upworkJob.client?.verificationStatus === 'VERIFIED',
+      totalSpent: upworkJob.client?.totalSpent?.rawValue
+        ? parseFloat(upworkJob.client.totalSpent.rawValue)
+        : (upworkJob.client?.totalSpent || 0),
+      totalHires: upworkJob.client?.totalHires || 0,
+      location: upworkJob.client?.location?.country || 'Unknown',
+      rating: upworkJob.client?.totalFeedback || upworkJob.client?.avgFeedback || 0,
+      reviewCount: upworkJob.client?.totalReviews || 0,
     },
 
-    proposalsCount: upworkJob.proposals?.total || 0,
-    category: upworkJob.category?.name || 'Unknown',
-    experienceLevel: upworkJob.experienceLevel || 'intermediate',
+    proposalsCount: upworkJob.totalApplicants || upworkJob.proposals?.total || 0,
+    category: upworkJob.category || upworkJob.category?.name || 'Unknown',
+    experienceLevel: (upworkJob.experienceLevel || 'intermediate').toLowerCase(),
 
     status: 'fetched',
     applied: false,

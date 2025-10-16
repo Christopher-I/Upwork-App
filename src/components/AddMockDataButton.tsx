@@ -1,21 +1,85 @@
 import { useState } from 'react';
-import { addMockJobs } from '../utils/mockData';
 import { clearAllJobs } from '../utils/clearJobs';
+import { transformUpworkJob } from '../lib/upwork';
+import { calculateJobScore, applyHardFilters } from '../utils/scoring';
+import { useSettings } from '../hooks/useSettings';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 export function AddMockDataButton() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const { settings } = useSettings();
 
   const handleClick = async () => {
     setLoading(true);
+
     try {
-      await addMockJobs();
+      // Call Cloud Function to fetch jobs from Upwork
+      const functions = getFunctions();
+      const fetchUpworkJobsFunction = httpsCallable(functions, 'fetchUpworkJobs');
+
+      console.log('📡 Calling Cloud Function to fetch Upwork jobs...');
+
+      const result = await fetchUpworkJobsFunction({
+        keywords: settings.keywords,
+        filters: {
+          posted: settings.platformFilters.posted,
+          maxProposals: settings.platformFilters.maxProposals,
+          experienceLevel: settings.platformFilters.experienceLevel,
+          paymentVerified: settings.platformFilters.paymentVerified,
+        },
+      });
+
+      const data = result.data as { jobs: any[]; count: number };
+      console.log(`✅ Fetched ${data.count} jobs from Upwork via Cloud Function`);
+
+      // Transform and score each job
+      let savedCount = 0;
+      for (const upworkJob of data.jobs) {
+        try {
+          const transformedJob = transformUpworkJob(upworkJob);
+
+          // Score the job using AI
+          const { total, breakdown } = await calculateJobScore(transformedJob, settings, true);
+
+          const jobWithScore = {
+            ...transformedJob,
+            score: total,
+            scoreBreakdown: breakdown,
+          };
+
+          // Apply hard filters to classify
+          const classification = applyHardFilters(jobWithScore as any, settings);
+
+          const finalJob = {
+            ...jobWithScore,
+            autoClassification: classification,
+            finalClassification: classification,
+            scoredAt: Timestamp.now(),
+            postedAt: Timestamp.fromDate(jobWithScore.postedAt!),
+            fetchedAt: Timestamp.fromDate(jobWithScore.fetchedAt!),
+            status: 'scored',
+          };
+
+          await addDoc(collection(db, 'jobs'), finalJob);
+          savedCount++;
+
+          console.log(`✅ ${transformedJob.title} - Score: ${total}/100 (${classification})`);
+        } catch (jobError) {
+          console.error(`❌ Error processing job:`, jobError);
+          // Continue with next job
+        }
+      }
+
+      console.log(`\n✅ Saved ${savedCount} jobs to Firestore`);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    } catch (error) {
-      console.error('Error adding mock data:', error);
-      alert('Error adding mock data. Check console.');
+    } catch (error: any) {
+      console.error('Error fetching from Upwork:', error);
+      alert(`Error: ${error.message || 'Failed to fetch jobs'}\n\nCheck console for details.`);
     } finally {
       setLoading(false);
     }
@@ -60,7 +124,7 @@ export function AddMockDataButton() {
             : 'bg-primary-600 text-white hover:bg-primary-700'
         }`}
       >
-        {loading ? 'Adding...' : success ? 'Added!' : 'Add Mock Data'}
+        {loading ? 'Fetching...' : success ? 'Done!' : 'Fetch from Upwork'}
       </button>
     </div>
   );

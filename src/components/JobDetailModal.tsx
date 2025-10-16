@@ -95,6 +95,37 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
     setEditedProposal('');
   };
 
+  const handleMarkAsApplied = async () => {
+    try {
+      await updateDoc(doc(db, 'jobs', currentJob.id), {
+        applied: true,
+        appliedAt: new Date(),
+        appliedProposal: currentJob.proposal?.content || '',
+        status: 'applied',
+      });
+      alert('✅ Marked as applied!');
+    } catch (error) {
+      console.error('Failed to mark as applied:', error);
+      alert('❌ Failed to mark as applied.');
+    }
+  };
+
+  const handleMarkAsWon = async () => {
+    const projectValue = prompt('Enter project value (optional):');
+
+    try {
+      await updateDoc(doc(db, 'jobs', currentJob.id), {
+        won: true,
+        wonAt: new Date(),
+        actualProjectValue: projectValue ? parseFloat(projectValue) : null,
+      });
+      alert('🎉 Congratulations on winning the job!');
+    } catch (error) {
+      console.error('Failed to mark as won:', error);
+      alert('❌ Failed to mark as won.');
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
@@ -417,13 +448,19 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
 
           {/* Actions */}
           <div className="border-t border-gray-200 pt-6 flex gap-3 flex-wrap">
-            {!job.applied && (
-              <button className="px-5 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors">
+            {!currentJob.applied && (
+              <button
+                onClick={handleMarkAsApplied}
+                className="px-5 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
+              >
                 Mark as Applied
               </button>
             )}
-            {job.applied && !job.won && (
-              <button className="px-5 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors">
+            {currentJob.applied && !currentJob.won && (
+              <button
+                onClick={handleMarkAsWon}
+                className="px-5 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
+              >
                 Mark as Won
               </button>
             )}
