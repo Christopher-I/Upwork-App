@@ -1,5 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { Job } from '../types/job';
+import { generateProposal } from '../lib/proposalGenerator';
+import { useSettings } from '../hooks/useSettings';
 
 interface JobDetailModalProps {
   job: Job;
@@ -7,6 +11,26 @@ interface JobDetailModalProps {
 }
 
 export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
+  const { settings } = useSettings();
+  const [currentJob, setCurrentJob] = useState<Job>(job);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedProposal, setEditedProposal] = useState('');
+
+  // Real-time listener for job updates
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      doc(db, 'jobs', job.id),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setCurrentJob({ id: snapshot.id, ...snapshot.data() } as Job);
+        }
+      }
+    );
+
+    return () => unsubscribe();
+  }, [job.id]);
+
   // Close modal on ESC key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -20,10 +44,55 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
   }, [onClose]);
 
   const copyProposal = () => {
-    if (job.proposal) {
-      navigator.clipboard.writeText(job.proposal.content);
+    if (currentJob.proposal) {
+      navigator.clipboard.writeText(currentJob.proposal.content);
       alert('✅ Proposal copied to clipboard!');
     }
+  };
+
+  const handleGenerateProposal = async () => {
+    setIsGenerating(true);
+
+    try {
+      const proposal = await generateProposal(currentJob, settings);
+
+      await updateDoc(doc(db, 'jobs', currentJob.id), {
+        proposal: {
+          ...proposal,
+          generatedAt: new Date(),
+          edited: false,
+        },
+        status: 'ready',
+      });
+    } catch (error) {
+      console.error('Failed to generate proposal:', error);
+      alert('❌ Failed to generate proposal. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleEditProposal = () => {
+    setIsEditing(true);
+    setEditedProposal(currentJob.proposal?.content || '');
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      await updateDoc(doc(db, 'jobs', currentJob.id), {
+        'proposal.content': editedProposal,
+        'proposal.edited': true,
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to save edit:', error);
+      alert('❌ Failed to save changes.');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedProposal('');
   };
 
   return (
@@ -211,33 +280,140 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
           </div>
 
           {/* Proposal */}
-          {job.proposal && (
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="font-semibold text-gray-900 mb-3 text-base">
-                AI-Generated Proposal ({job.proposal.template})
-              </h3>
-              <div className="bg-primary-50 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap mb-4 border border-primary-100">
-                {job.proposal.content}
-              </div>
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="font-semibold text-gray-900 mb-3 text-base">
+              AI-Generated Proposal
+            </h3>
 
-              <div className="flex gap-3">
+            {/* No proposal yet */}
+            {!currentJob.proposal && !isGenerating && (
+              <div className="bg-gray-50 rounded-lg p-6 text-center border border-gray-200">
+                <p className="text-gray-600 mb-4">
+                  No proposal generated yet. Click below to generate a customized proposal.
+                </p>
                 <button
-                  onClick={copyProposal}
+                  onClick={handleGenerateProposal}
                   className="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors"
                 >
-                  Copy Proposal
-                </button>
-                <button
-                  onClick={() =>
-                    window.open(job.url, '_blank', 'noopener,noreferrer')
-                  }
-                  className="px-5 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
-                >
-                  Open on Upwork
+                  Generate Proposal
                 </button>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Generating */}
+            {isGenerating && (
+              <div className="bg-blue-50 rounded-lg p-6 text-center border border-blue-200">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-3"></div>
+                <p className="text-gray-700 font-medium">Generating your proposal...</p>
+                <p className="text-gray-500 text-sm mt-1">This takes about 5-10 seconds</p>
+              </div>
+            )}
+
+            {/* Proposal ready */}
+            {currentJob.proposal && !isEditing && (
+              <div>
+                {/* Quick Wins */}
+                {currentJob.proposal.quickWins && currentJob.proposal.quickWins.length > 0 && (
+                  <div className="mb-4 bg-green-50 rounded-lg p-4 border border-green-200">
+                    <h4 className="font-medium text-gray-900 mb-2 text-sm">Quick Wins Included:</h4>
+                    <ul className="space-y-1">
+                      {currentJob.proposal.quickWins.map((win, index) => (
+                        <li key={index} className="text-sm text-gray-700 flex items-start">
+                          <span className="text-green-600 mr-2">✓</span>
+                          <span>{win}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Proposal Content */}
+                <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap mb-4 border border-gray-200">
+                  {currentJob.proposal.content}
+                </div>
+
+                {/* Proposal Meta */}
+                <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
+                  <span>Template: {currentJob.proposal.template}</span>
+                  {currentJob.proposal.packageRecommended && (
+                    <>
+                      <span>•</span>
+                      <span>Package: {currentJob.proposal.packageRecommended}</span>
+                    </>
+                  )}
+                  {currentJob.proposal.priceRange && (
+                    <>
+                      <span>•</span>
+                      <span>Range: {currentJob.proposal.priceRange}</span>
+                    </>
+                  )}
+                  {currentJob.proposal.edited && (
+                    <>
+                      <span>•</span>
+                      <span className="text-amber-600">✏️ Edited</span>
+                    </>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 flex-wrap">
+                  <button
+                    onClick={copyProposal}
+                    className="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors"
+                  >
+                    Copy Proposal
+                  </button>
+                  <button
+                    onClick={handleEditProposal}
+                    className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={handleGenerateProposal}
+                    disabled={isGenerating}
+                    className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200 disabled:opacity-50"
+                  >
+                    Regenerate
+                  </button>
+                  <button
+                    onClick={() =>
+                      window.open(currentJob.url, '_blank', 'noopener,noreferrer')
+                    }
+                    className="px-5 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
+                  >
+                    Open on Upwork
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Edit Mode */}
+            {isEditing && (
+              <div>
+                <textarea
+                  value={editedProposal}
+                  onChange={(e) => setEditedProposal(e.target.value)}
+                  className="w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm font-mono"
+                  placeholder="Edit your proposal..."
+                />
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={handleSaveEdit}
+                    className="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors"
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Actions */}
           <div className="border-t border-gray-200 pt-6 flex gap-3 flex-wrap">
