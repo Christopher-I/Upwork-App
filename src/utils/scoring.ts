@@ -20,7 +20,9 @@ export async function calculateJobScore(
         job.title || '',
         job.description || '',
         job.budget || 0,
-        job.budgetType || 'negotiable'
+        job.budgetType || 'negotiable',
+        job.hourlyBudgetMin,
+        job.hourlyBudgetMax
       );
       console.log('✅ ChatGPT scoring successful');
     } catch (error) {
@@ -659,10 +661,34 @@ export function scoreRedFlags(job: Partial<Job>): number {
  * Apply hard filters after scoring
  */
 export function applyHardFilters(
-  job: Partial<Job> & { score: number; estimatedEHR: number },
+  job: Partial<Job> & { score: number; estimatedEHR: number; scoreBreakdown?: ScoreBreakdown },
   settings: Settings
 ): 'recommended' | 'not_recommended' {
-  // Must pass ALL hard filters
+  // Auto-recommend high-value jobs ($10,000+)
+  const hasVeryHighMarketRate = (job.estimatedPrice || 0) >= 10000;
+  if (hasVeryHighMarketRate) {
+    return 'recommended';
+  }
+
+  // Check for "star" criteria:
+  // - Has open budget
+  // - Has team language ("we/our")
+  // - Market rate estimate >= $5,000
+  // - Client rating is NOT terrible (>= 4/5 OR is new client with 0 rating)
+  const hasOpenBudget = (job.scoreBreakdown?.professionalSignals?.openBudget || 0) > 0;
+  const hasTeamLanguage = (job.scoreBreakdown?.professionalSignals?.weLanguage || 0) > 0;
+  const hasHighMarketRate = (job.estimatedPrice || 0) >= 5000;
+  const clientRating = job.client?.rating || 0;
+  const clientNotTerrible = clientRating === 0 || clientRating >= 4; // New client (0) OR good rating (4+)
+
+  const hasStarCriteria = hasOpenBudget && hasTeamLanguage && hasHighMarketRate && clientNotTerrible;
+
+  // If job has star criteria, auto-recommend it (bypass normal filters)
+  if (hasStarCriteria) {
+    return 'recommended';
+  }
+
+  // Otherwise, must pass ALL hard filters
   const passes =
     job.score >= settings.minScore &&
     job.estimatedEHR >= settings.minEHR &&

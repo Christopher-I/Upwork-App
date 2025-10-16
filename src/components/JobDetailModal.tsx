@@ -212,6 +212,62 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
             </div>
           </div>
 
+          {/* Pricing Analysis */}
+          <div className="bg-success-50 border border-success-200 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-900 mb-3 text-base">Pricing Analysis</h3>
+            <div className="space-y-3 text-sm">
+              {/* Client's Offer */}
+              <div className="flex items-center justify-between pb-3 border-b border-success-100">
+                <span className="text-gray-600">Client's Budget:</span>
+                <span className="font-semibold text-gray-900">
+                  {currentJob.budgetType === 'hourly' && currentJob.hourlyBudgetMin && currentJob.hourlyBudgetMax ? (
+                    `$${currentJob.hourlyBudgetMin}-$${currentJob.hourlyBudgetMax}/hr`
+                  ) : currentJob.budgetType === 'hourly' && currentJob.hourlyBudgetMax ? (
+                    `Up to $${currentJob.hourlyBudgetMax}/hr`
+                  ) : currentJob.budgetType === 'fixed' && currentJob.budget > 0 ? (
+                    `$${currentJob.budget.toLocaleString()} (fixed)`
+                  ) : (
+                    'Not specified (open budget)'
+                  )}
+                </span>
+              </div>
+
+              {/* Market Rate Estimate */}
+              <div className="flex items-center justify-between pb-3 border-b border-success-100">
+                <span className="text-gray-600">Market Rate Estimate:</span>
+                <span className="font-bold text-success-700 text-lg">
+                  ${currentJob.estimatedPrice?.toLocaleString() || 'TBD'}
+                </span>
+              </div>
+
+              {/* Estimated Hours */}
+              <div className="flex items-center justify-between pb-3 border-b border-success-100">
+                <span className="text-gray-600">Estimated Hours:</span>
+                <span className="font-semibold text-gray-900">
+                  ~{currentJob.estimatedHours} hours
+                </span>
+              </div>
+
+              {/* Market EHR */}
+              <div className="flex items-center justify-between pb-3 border-b border-success-100">
+                <span className="text-gray-600">Market EHR:</span>
+                <span className="font-bold text-success-700">
+                  ${Math.round(currentJob.estimatedEHR)}/hr
+                </span>
+              </div>
+
+              {/* Client's Effective Rate (if hourly) */}
+              {currentJob.budgetType === 'hourly' && currentJob.hourlyBudgetMax && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Client's Max Rate:</span>
+                  <span className="font-medium text-gray-700">
+                    ${currentJob.hourlyBudgetMax}/hr
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Score Breakdown */}
           <div>
             <div className="flex items-center justify-between mb-4">

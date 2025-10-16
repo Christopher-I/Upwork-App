@@ -4,13 +4,15 @@ export interface FilterOptions {
   budgetType: 'all' | 'fixed' | 'hourly' | 'open';
   minBudget: number;
   maxBudget: number;
+  minMarketRate: number;
+  maxMarketRate: number;
   minProposals: number;
   maxProposals: number;
   teamLanguage: 'all' | 'team' | 'solo';
   experienceLevel: 'all' | 'entry' | 'intermediate' | 'expert';
   paymentVerified: 'all' | 'yes' | 'no';
   clientCountry: 'us_only' | 'all';
-  sortBy: 'newest' | 'price_low' | 'price_high' | 'score_high' | 'proposals_low';
+  sortBy: 'newest' | 'price_low' | 'price_high' | 'score_high' | 'proposals_low' | 'market_rate_high';
 }
 
 interface JobFiltersProps {
@@ -126,6 +128,41 @@ export function JobFilters({ filters, onFilterChange }: JobFiltersProps) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="No limit"
                 min="0"
+              />
+            </div>
+
+            {/* Market Rate Range */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Min Market Rate ($)
+              </label>
+              <input
+                type="number"
+                value={filters.minMarketRate || ''}
+                onChange={(e) =>
+                  handleChange('minMarketRate', parseInt(e.target.value) || 0)
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="0"
+                min="0"
+                step="1000"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Max Market Rate ($)
+              </label>
+              <input
+                type="number"
+                value={filters.maxMarketRate || ''}
+                onChange={(e) =>
+                  handleChange('maxMarketRate', parseInt(e.target.value) || 0)
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="No limit"
+                min="0"
+                step="1000"
               />
             </div>
 
@@ -247,6 +284,7 @@ export function JobFilters({ filters, onFilterChange }: JobFiltersProps) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="score_high">Score: High to Low</option>
+                <option value="market_rate_high">Market Rate: High to Low</option>
                 <option value="newest">Newest First</option>
                 <option value="price_low">Price: Low to High</option>
                 <option value="price_high">Price: High to Low</option>
@@ -264,6 +302,8 @@ export function JobFilters({ filters, onFilterChange }: JobFiltersProps) {
                     budgetType: 'all',
                     minBudget: 0,
                     maxBudget: 0,
+                    minMarketRate: 0,
+                    maxMarketRate: 0,
                     minProposals: 0,
                     maxProposals: 0,
                     teamLanguage: 'all',

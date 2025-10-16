@@ -14,6 +14,8 @@ export interface Job {
   budget: number;
   budgetType: 'fixed' | 'hourly' | 'negotiable';
   budgetIsPlaceholder: boolean;
+  hourlyBudgetMin?: number;
+  hourlyBudgetMax?: number;
 
   // Client info
   client: {

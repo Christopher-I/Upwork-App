@@ -243,12 +243,17 @@ export function transformUpworkJob(upworkJob: any): Partial<Job> {
   let budget = 0;
   let budgetType: 'fixed' | 'hourly' | 'negotiable' = 'negotiable';
   let budgetIsPlaceholder = false;
+  let hourlyBudgetMin: number | undefined;
+  let hourlyBudgetMax: number | undefined;
 
   if (upworkJob.amount && upworkJob.amount.rawValue && parseFloat(upworkJob.amount.rawValue) > 0) {
     budget = parseFloat(upworkJob.amount.rawValue);
     budgetType = 'fixed';
   } else if (upworkJob.hourlyBudgetMax && upworkJob.hourlyBudgetMax.rawValue && parseFloat(upworkJob.hourlyBudgetMax.rawValue) > 0) {
-    budget = parseFloat(upworkJob.hourlyBudgetMax.rawValue);
+    // Store both min and max for hourly jobs
+    hourlyBudgetMin = upworkJob.hourlyBudgetMin?.rawValue ? parseFloat(upworkJob.hourlyBudgetMin.rawValue) : undefined;
+    hourlyBudgetMax = parseFloat(upworkJob.hourlyBudgetMax.rawValue);
+    budget = hourlyBudgetMax; // Use max as default budget for backwards compatibility
     budgetType = 'hourly';
   } else if (upworkJob.budget?.amount && upworkJob.budget.amount > 0) {
     budget = upworkJob.budget.amount;
@@ -275,6 +280,8 @@ export function transformUpworkJob(upworkJob: any): Partial<Job> {
     budget,
     budgetType,
     budgetIsPlaceholder,
+    hourlyBudgetMin,
+    hourlyBudgetMax,
 
     client: {
       id: upworkJob.client?.id || 'unknown',

@@ -6,8 +6,15 @@ interface JobCardProps {
 }
 
 export function JobCard({ job, onClick }: JobCardProps) {
-  const isProfessional =
-    job.scoreBreakdown?.professionalSignals?.subtotal === 10;
+  // Show star only if ALL three conditions are met:
+  // 1. Has open budget
+  // 2. Has team language ("we/our")
+  // 3. Market rate estimate is $5,000 or above
+  const hasOpenBudget = (job.scoreBreakdown?.professionalSignals?.openBudget || 0) > 0;
+  const hasTeamLanguage = (job.scoreBreakdown?.professionalSignals?.weLanguage || 0) > 0;
+  const hasHighMarketRate = (job.estimatedPrice || 0) >= 5000;
+  const isProfessional = hasOpenBudget && hasTeamLanguage && hasHighMarketRate;
+
   const scoreColor = job.score >= 90 ? 'success' : job.score >= 80 ? 'primary' : 'gray';
   const scoreColorClass =
     scoreColor === 'success' ? 'bg-success-50 text-success-700 border-success-200' :
@@ -39,16 +46,16 @@ export function JobCard({ job, onClick }: JobCardProps) {
         )}
       </div>
 
-      {/* Inline badges - Score, EHR, Hours */}
+      {/* Inline badges - Score, Market Rate, EHR */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border ${scoreColorClass}`}>
           {job.score}
         </span>
-        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200">
-          ${Math.round(job.estimatedEHR)}/hr
+        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-success-50 text-success-700 border border-success-200">
+          ${job.estimatedPrice?.toLocaleString() || 'TBD'}
         </span>
-        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">
-          ~{job.estimatedHours}hrs
+        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
+          ${Math.round(job.estimatedEHR)}/hr
         </span>
       </div>
 
@@ -57,11 +64,11 @@ export function JobCard({ job, onClick }: JobCardProps) {
         {job.description}
       </p>
 
-      {/* Professional signals - Only show if perfect */}
+      {/* Professional signals - Show if has open budget AND team language AND $5k+ market rate */}
       {isProfessional && (
         <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
           <span>⭐</span>
-          <span>Open budget • Team language</span>
+          <span>Open budget • Team language • High value</span>
         </div>
       )}
 

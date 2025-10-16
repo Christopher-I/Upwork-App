@@ -29,6 +29,7 @@ export interface Settings {
     excludeHiredJobs: boolean;
     minClientRating: number;
     minHourlyRate: number;
+    minFixedPrice: number;
     sortBy: string;
   };
 
@@ -142,6 +143,7 @@ export const DEFAULT_SETTINGS: Settings = {
     excludeHiredJobs: true,
     minClientRating: 4,
     minHourlyRate: 20,
+    minFixedPrice: 2500,
     sortBy: 'newest',
   },
 

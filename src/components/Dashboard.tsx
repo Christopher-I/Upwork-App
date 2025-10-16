@@ -34,6 +34,8 @@ export function Dashboard() {
       budgetType: 'all',
       minBudget: 0,
       maxBudget: 0,
+      minMarketRate: 0,
+      maxMarketRate: 0,
       minProposals: 0,
       maxProposals: 0,
       teamLanguage: 'all',
@@ -59,7 +61,7 @@ export function Dashboard() {
   const { settings, updateSettings } = useSettings();
 
   const { jobs: rawJobs, loading } = useJobs(activeTab);
-  const counts = useJobCounts();
+  const counts = useJobCounts(filters.clientCountry);
 
   // Apply filters and sorting
   const jobs = useMemo(() => {
@@ -125,6 +127,18 @@ export function Dashboard() {
       );
     }
 
+    // Market rate range filter
+    if (filters.minMarketRate > 0) {
+      filtered = filtered.filter(
+        (job) => (job.estimatedPrice || 0) >= filters.minMarketRate
+      );
+    }
+    if (filters.maxMarketRate > 0) {
+      filtered = filtered.filter(
+        (job) => (job.estimatedPrice || 0) <= filters.maxMarketRate
+      );
+    }
+
     // Team language filter
     if (filters.teamLanguage === 'team') {
       filtered = filtered.filter(
@@ -168,6 +182,9 @@ export function Dashboard() {
         break;
       case 'score_high':
         filtered.sort((a, b) => b.score - a.score);
+        break;
+      case 'market_rate_high':
+        filtered.sort((a, b) => (b.estimatedPrice || 0) - (a.estimatedPrice || 0));
         break;
       case 'proposals_low':
         filtered.sort((a, b) => a.proposalsCount - b.proposalsCount);

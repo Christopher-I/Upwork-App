@@ -357,7 +357,34 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                   <p className="mt-1 text-xs text-gray-500">
-                    Exclude hourly jobs below this rate (fixed-price jobs always included)
+                    Exclude hourly jobs below this rate
+                  </p>
+                </div>
+
+                {/* Min Fixed Price */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Minimum Fixed Price ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="50000"
+                    step="100"
+                    value={localSettings.platformFilters.minFixedPrice}
+                    onChange={(e) =>
+                      setLocalSettings({
+                        ...localSettings,
+                        platformFilters: {
+                          ...localSettings.platformFilters,
+                          minFixedPrice: parseInt(e.target.value),
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Exclude fixed-price jobs below this amount (default: $2,500)
                   </p>
                 </div>
               </div>

@@ -72,8 +72,9 @@ export function useJobs(filter?: 'recommended' | 'applied' | 'all') {
 
 /**
  * Hook to get job counts by classification
+ * Applies same filters as Dashboard (US-only, hired jobs)
  */
-export function useJobCounts() {
+export function useJobCounts(clientCountry: 'us_only' | 'all' = 'us_only') {
   const [counts, setCounts] = useState({
     recommended: 0,
     applied: 0,
@@ -84,9 +85,32 @@ export function useJobCounts() {
     const unsubscribe = onSnapshot(collection(db, 'jobs'), (snapshot) => {
       let recommended = 0;
       let applied = 0;
+      let total = 0;
 
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
+
+        // Apply US-only filter
+        if (clientCountry === 'us_only') {
+          const location = data.client?.location;
+          const country = typeof location === 'string' ? location : location?.country;
+          if (country !== 'United States' && country !== 'US' && country !== 'USA') {
+            return; // Skip non-US jobs
+          }
+        }
+
+        // Exclude hired jobs
+        if (data.freelancersToHire !== undefined && data.totalFreelancersToHire !== undefined) {
+          const freelancersToHire = data.freelancersToHire || 0;
+          const totalFreelancersToHire = data.totalFreelancersToHire || 1;
+
+          if (totalFreelancersToHire > 0 && freelancersToHire === 0) {
+            return; // Skip hired jobs
+          }
+        }
+
+        // Count after filters
+        total++;
         if (data.finalClassification === 'recommended') recommended++;
         if (data.applied === true) applied++;
       });
@@ -94,12 +118,12 @@ export function useJobCounts() {
       setCounts({
         recommended,
         applied,
-        total: snapshot.size,
+        total,
       });
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [clientCountry]);
 
   return counts;
 }

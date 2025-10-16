@@ -214,6 +214,7 @@ async function fetchJobsForSearch(apiClient, searchTerm, filters) {
                       state
                       timezone
                     }
+                    companyName
                   }
                   occupations {
                     category {
@@ -341,6 +342,21 @@ exports.fetchUpworkJobs = functions.https.onCall({ cors: true }, async (request)
             }
         }
         console.log(`Total jobs fetched: ${allJobs.length}`);
+        // Debug: Log complete job object for first Shopify job
+        const sampleJob = allJobs.find((job) => { var _a; return (_a = job.title) === null || _a === void 0 ? void 0 : _a.includes('Shopify'); });
+        if (sampleJob) {
+            console.log('📋 TOP-LEVEL KEYS:', Object.keys(sampleJob));
+            console.log('📋 CLIENT KEYS:', Object.keys(sampleJob.client || {}));
+            console.log('📋 AMOUNT KEYS:', Object.keys(sampleJob.amount || {}));
+            console.log('📋 OCCUPATIONS KEYS:', Object.keys(sampleJob.occupations || {}));
+            console.log('📋 WEEKLY BUDGET KEYS:', Object.keys(sampleJob.weeklyBudget || {}));
+            // Check if occupations has nested arrays/objects
+            if (sampleJob.occupations) {
+                console.log('📋 OCCUPATIONS STRUCTURE:', JSON.stringify(sampleJob.occupations, null, 2));
+            }
+            console.log('📋 FULL JOB JSON:');
+            console.log(JSON.stringify(sampleJob, null, 2));
+        }
         // Remove duplicates
         let uniqueJobs = Array.from(new Map(allJobs.map((job) => [job.id, job])).values());
         console.log(`Unique jobs after deduplication: ${uniqueJobs.length}`);
@@ -352,7 +368,12 @@ exports.fetchUpworkJobs = functions.https.onCall({ cors: true }, async (request)
         }
         // Filter by US-only clients (client must be based in the US)
         if (filters.usOnly) {
-            uniqueJobs = uniqueJobs.filter((job) => { var _a, _b; return ((_b = (_a = job.client) === null || _a === void 0 ? void 0 : _a.location) === null || _b === void 0 ? void 0 : _b.country) === 'United States'; });
+            uniqueJobs = uniqueJobs.filter((job) => {
+                var _a, _b;
+                const country = (_b = (_a = job.client) === null || _a === void 0 ? void 0 : _a.location) === null || _b === void 0 ? void 0 : _b.country;
+                // Handle both full names and 3-letter country codes
+                return country === 'United States' || country === 'USA' || country === 'US';
+            });
             console.log(`After US-only client filter: ${uniqueJobs.length}`);
         }
         // Filter by English-only (check if description is in English)
@@ -385,33 +406,45 @@ exports.fetchUpworkJobs = functions.https.onCall({ cors: true }, async (request)
         });
         console.log(`After client rating filter (>= 4 stars or no reviews): ${uniqueJobs.length}`);
         // Exclude jobs that have already hired freelancers
+        // Based on API data: freelancersToHire = 0 means job is filled
+        // freelancersToHire = 1 (or more) means job is still open
         uniqueJobs = uniqueJobs.filter((job) => {
-            // If freelancersToHire is 0, it means all positions are filled
-            const freelancersToHire = job.freelancersToHire || 0;
-            const totalFreelancersToHire = job.totalFreelancersToHire || 1;
-            // If they need freelancers and still have openings, include it
-            // If freelancersToHire is 0 and totalFreelancersToHire > 0, it means they've hired everyone
-            if (totalFreelancersToHire > 0 && freelancersToHire === 0) {
-                return false; // Exclude - all positions filled
+            const freelancersToHire = job.freelancersToHire;
+            // If freelancersToHire is 0, the job has been filled - EXCLUDE IT
+            if (freelancersToHire === 0) {
+                console.log(`❌ EXCLUDED (hired): "${job.title}" (freelancersToHire = 0)`);
+                return false;
             }
-            return true; // Include - still has openings
+            return true; // Include - still open
         });
         console.log(`After excluding hired jobs: ${uniqueJobs.length}`);
-        // Exclude jobs less than $20/hr (only for hourly jobs)
+        // Exclude jobs with low budgets (hourly < minHourlyRate OR fixed < minFixedPrice)
+        const minHourlyRate = filters.minHourlyRate || 20;
+        const minFixedPrice = filters.minFixedPrice || 2500;
         uniqueJobs = uniqueJobs.filter((job) => {
-            var _a;
-            // Check if job has an hourly budget
+            var _a, _b;
+            // Check hourly budget
             const hourlyMax = ((_a = job.hourlyBudgetMax) === null || _a === void 0 ? void 0 : _a.rawValue)
                 ? parseFloat(job.hourlyBudgetMax.rawValue)
                 : 0;
-            // If hourly budget exists and is less than $20, exclude it
-            if (hourlyMax > 0 && hourlyMax < 20) {
+            // Check fixed-price budget
+            const fixedPrice = ((_b = job.amount) === null || _b === void 0 ? void 0 : _b.rawValue)
+                ? parseFloat(job.amount.rawValue)
+                : 0;
+            // If hourly budget exists and is less than minimum, exclude it
+            if (hourlyMax > 0 && hourlyMax < minHourlyRate) {
+                console.log(`❌ EXCLUDED (< $${minHourlyRate}/hr): "${job.title}" (hourlyMax = $${hourlyMax}/hr)`);
                 return false;
             }
-            // For fixed price or open budget jobs, include them (we can't determine hourly rate)
+            // If fixed-price budget exists and is less than minimum, exclude it
+            if (fixedPrice > 0 && fixedPrice < minFixedPrice) {
+                console.log(`❌ EXCLUDED (< $${minFixedPrice}): "${job.title}" (fixedPrice = $${fixedPrice})`);
+                return false;
+            }
+            // Include open budget jobs (both hourly and fixed = 0)
             return true;
         });
-        console.log(`After excluding jobs < $20/hr: ${uniqueJobs.length}`);
+        console.log(`After budget filters (≥$${minHourlyRate}/hr or ≥$${minFixedPrice} fixed): ${uniqueJobs.length}`);
         // Exclude WordPress jobs (check title and description)
         // BUT allow jobs about converting/migrating FROM WordPress to other platforms
         uniqueJobs = uniqueJobs.filter((job) => {
