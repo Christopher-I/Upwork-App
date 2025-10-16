@@ -9,6 +9,7 @@ export interface FilterOptions {
   teamLanguage: 'all' | 'team' | 'solo';
   experienceLevel: 'all' | 'entry' | 'intermediate' | 'expert';
   paymentVerified: 'all' | 'yes' | 'no';
+  clientCountry: 'us_only' | 'all';
   sortBy: 'newest' | 'price_low' | 'price_high' | 'score_high' | 'proposals_low';
 }
 
@@ -216,6 +217,23 @@ export function JobFilters({ filters, onFilterChange }: JobFiltersProps) {
               </select>
             </div>
 
+            {/* Client Country */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Client Location
+              </label>
+              <select
+                value={filters.clientCountry}
+                onChange={(e) =>
+                  handleChange('clientCountry', e.target.value as any)
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="us_only">US Clients Only</option>
+                <option value="all">All Countries</option>
+              </select>
+            </div>
+
             {/* Sort By */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -251,6 +269,7 @@ export function JobFilters({ filters, onFilterChange }: JobFiltersProps) {
                     teamLanguage: 'all',
                     experienceLevel: 'all',
                     paymentVerified: 'all',
+                    clientCountry: 'us_only',
                     sortBy: 'score_high',
                   })
                 }
@@ -276,5 +295,7 @@ function getActiveFilterCount(filters: FilterOptions): number {
   if (filters.teamLanguage !== 'all') count++;
   if (filters.experienceLevel !== 'all') count++;
   if (filters.paymentVerified !== 'all') count++;
+  // Don't count clientCountry as 'us_only' is the default
+  if (filters.clientCountry !== 'us_only') count++;
   return count;
 }

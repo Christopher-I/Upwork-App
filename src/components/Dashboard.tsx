@@ -11,20 +11,50 @@ import { Job } from '../types/job';
 type TabType = 'recommended' | 'applied' | 'all';
 
 export function Dashboard() {
-  const [activeTab, setActiveTab] = useState<TabType>('recommended');
+  // Persist active tab in localStorage
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    const saved = localStorage.getItem('activeTab');
+    return (saved as TabType) || 'recommended';
+  });
+
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [filters, setFilters] = useState<FilterOptions>({
-    budgetType: 'all',
-    minBudget: 0,
-    maxBudget: 0,
-    minProposals: 0,
-    maxProposals: 0,
-    teamLanguage: 'all',
-    experienceLevel: 'all',
-    paymentVerified: 'all',
-    sortBy: 'score_high',
+
+  // Persist filters in localStorage
+  const [filters, setFilters] = useState<FilterOptions>(() => {
+    const saved = localStorage.getItem('jobFilters');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        // If parsing fails, use defaults
+      }
+    }
+    return {
+      budgetType: 'all',
+      minBudget: 0,
+      maxBudget: 0,
+      minProposals: 0,
+      maxProposals: 0,
+      teamLanguage: 'all',
+      experienceLevel: 'all',
+      paymentVerified: 'all',
+      clientCountry: 'us_only',
+      sortBy: 'score_high',
+    };
   });
+
+  // Save active tab to localStorage when it changes
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    localStorage.setItem('activeTab', tab);
+  };
+
+  // Save filters to localStorage when they change
+  const handleFilterChange = (newFilters: FilterOptions) => {
+    setFilters(newFilters);
+    localStorage.setItem('jobFilters', JSON.stringify(newFilters));
+  };
 
   const { settings, updateSettings } = useSettings();
 
@@ -35,13 +65,15 @@ export function Dashboard() {
   const jobs = useMemo(() => {
     let filtered = [...rawJobs];
 
-    // ALWAYS filter out non-US clients by default (applies to all tabs)
-    filtered = filtered.filter((job) => {
-      const location = job.client?.location;
-      // Handle both string format and object format
-      const country = typeof location === 'string' ? location : location?.country;
-      return country === 'United States' || country === 'US' || country === 'USA';
-    });
+    // Apply country filter (applies to all tabs)
+    if (filters.clientCountry === 'us_only') {
+      filtered = filtered.filter((job) => {
+        const location = job.client?.location;
+        // Handle both string format and object format
+        const country = typeof location === 'string' ? location : location?.country;
+        return country === 'United States' || country === 'US' || country === 'USA';
+      });
+    }
 
     // Only apply additional filters on "all" tab
     if (activeTab !== 'all') return filtered;
@@ -189,25 +221,45 @@ export function Dashboard() {
           </div>
         </div>
 
+        {/* Country Filter - Shows on all tabs */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium text-gray-700">Client Location:</label>
+              <select
+                value={filters.clientCountry}
+                onChange={(e) => handleFilterChange({ ...filters, clientCountry: e.target.value as any })}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="us_only">US Clients Only</option>
+                <option value="all">All Countries</option>
+              </select>
+            </div>
+            <div className="text-sm text-gray-500">
+              Showing <span className="font-semibold text-gray-900">{jobs.length}</span> jobs
+            </div>
+          </div>
+        </div>
+
         {/* Tabs */}
         <div className="flex gap-6 mb-6 border-b border-gray-200">
           <TabButton
             active={activeTab === 'recommended'}
-            onClick={() => setActiveTab('recommended')}
+            onClick={() => handleTabChange('recommended')}
             count={counts.recommended}
           >
             Recommended
           </TabButton>
           <TabButton
             active={activeTab === 'applied'}
-            onClick={() => setActiveTab('applied')}
+            onClick={() => handleTabChange('applied')}
             count={counts.applied}
           >
             Applied
           </TabButton>
           <TabButton
             active={activeTab === 'all'}
-            onClick={() => setActiveTab('all')}
+            onClick={() => handleTabChange('all')}
             count={counts.total}
           >
             All Jobs
@@ -216,7 +268,7 @@ export function Dashboard() {
 
         {/* Filters - Only show on All Jobs tab */}
         {activeTab === 'all' && (
-          <JobFilters filters={filters} onFilterChange={setFilters} />
+          <JobFilters filters={filters} onFilterChange={handleFilterChange} />
         )}
 
         {/* Jobs Grid */}
