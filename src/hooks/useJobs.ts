@@ -20,6 +20,7 @@ export function useJobs(filter?: 'recommended' | 'applied' | 'all') {
         q = query(
           collection(db, 'jobs'),
           where('finalClassification', '==', 'recommended'),
+          where('applied', '==', false),
           orderBy('score', 'desc')
         );
       } else if (filter === 'applied') {
@@ -29,8 +30,12 @@ export function useJobs(filter?: 'recommended' | 'applied' | 'all') {
           orderBy('appliedAt', 'desc')
         );
       } else {
-        // All jobs, sorted by score
-        q = query(collection(db, 'jobs'), orderBy('score', 'desc'));
+        // All jobs (excluding applied), sorted by score
+        q = query(
+          collection(db, 'jobs'),
+          where('applied', '==', false),
+          orderBy('score', 'desc')
+        );
       }
 
       // Listen to real-time updates
@@ -110,8 +115,12 @@ export function useJobCounts(clientCountry: 'us_only' | 'all' = 'us_only') {
         }
 
         // Count after filters
-        total++;
-        if (data.finalClassification === 'recommended') recommended++;
+        // Only count non-applied jobs for recommended and total
+        if (data.applied !== true) {
+          total++;
+          if (data.finalClassification === 'recommended') recommended++;
+        }
+        // Always count applied jobs for applied tab
         if (data.applied === true) applied++;
       });
 
