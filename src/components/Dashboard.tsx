@@ -329,8 +329,8 @@ export function Dashboard() {
           </TabButton>
         </div>
 
-        {/* Total Market Value - Only show on recommended tab */}
-        {activeTab === 'recommended' && (
+        {/* Total Market Value - Show on recommended and all jobs tabs */}
+        {(activeTab === 'recommended' || activeTab === 'all') && (
           <div className="bg-gradient-to-r from-success-50 to-success-100 border border-success-200 rounded-lg px-6 py-4 mb-6">
             <div className="flex items-center justify-between">
               <div>
