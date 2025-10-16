@@ -191,7 +191,7 @@ export function AddMockDataButton() {
                 : 'bg-primary-600 text-white hover:bg-primary-700'
             }`}
           >
-            {loading ? 'Fetching...' : success ? 'Done!' : 'Fetch from Upwork'}
+            {loading ? 'Fetching...' : success ? 'Done!' : 'Fetch from Upwork (once every 6 hrs)'}
           </button>
 
           {loading && (
