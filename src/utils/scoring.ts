@@ -1,10 +1,82 @@
 import { Job, ScoreBreakdown } from '../types/job';
 import { Settings } from '../types/settings';
+import { scoreJobWithChatGPT } from '../lib/openai';
 
 /**
  * Calculate complete job score (0-100 points)
+ * Uses hybrid approach: Rules for deterministic dimensions, ChatGPT for judgment-based
  */
-export function calculateJobScore(
+export async function calculateJobScore(
+  job: Partial<Job>,
+  settings: Settings,
+  useAI: boolean = true
+): Promise<{ total: number; breakdown: ScoreBreakdown }> {
+  let aiScores = null;
+
+  // Try to get AI scores for 3 dimensions if enabled
+  if (useAI) {
+    try {
+      aiScores = await scoreJobWithChatGPT(
+        job.title || '',
+        job.description || '',
+        job.budget || 0,
+        job.budgetType || 'negotiable'
+      );
+      console.log('✅ ChatGPT scoring successful');
+    } catch (error) {
+      console.warn('⚠️ ChatGPT scoring failed, using rule-based fallback:', error);
+    }
+  }
+
+  const breakdown: ScoreBreakdown = {
+    // Rule-based (always)
+    clientQuality: scoreClientQuality(job),
+    keywordsMatch: scoreKeywordsMatch(job, settings),
+    professionalSignals: scoreProfessionalSignals(job),
+
+    // AI-based with fallback
+    businessImpact: aiScores?.businessImpact.score ?? scoreBusinessImpact(job),
+    jobClarity: aiScores?.jobClarity.score ?? scoreJobClarity(job),
+    ehrPotential: aiScores?.ehrPotential.score ?? scoreEHRPotential(job, settings),
+
+    redFlags: scoreRedFlags(job),
+  };
+
+  // If AI scoring succeeded, store additional data
+  if (aiScores) {
+    (job as any).estimatedPrice = aiScores.ehrPotential.estimatedPrice;
+    (job as any).estimatedHours = aiScores.ehrPotential.estimatedHours;
+    (job as any).estimatedEHR = aiScores.ehrPotential.estimatedEHR;
+
+    (job as any).jobClarity = {
+      technicalMatches: aiScores.jobClarity.technicalMatches,
+      clarityMatches: aiScores.jobClarity.clarityMatches,
+      total: aiScores.jobClarity.totalMatches,
+    };
+
+    (job as any).detectedOutcomes = aiScores.businessImpact.detectedOutcomes;
+    (job as any).isTechnicalOnly = aiScores.businessImpact.isTechnicalOnly;
+  }
+
+  const total =
+    breakdown.clientQuality.subtotal +
+    breakdown.keywordsMatch +
+    breakdown.professionalSignals.subtotal +
+    breakdown.businessImpact +
+    breakdown.jobClarity +
+    breakdown.ehrPotential +
+    breakdown.redFlags;
+
+  return {
+    total: Math.max(0, Math.min(100, total)), // Clamp between 0-100
+    breakdown,
+  };
+}
+
+/**
+ * Synchronous version for when AI is not available
+ */
+export function calculateJobScoreSync(
   job: Partial<Job>,
   settings: Settings
 ): { total: number; breakdown: ScoreBreakdown } {

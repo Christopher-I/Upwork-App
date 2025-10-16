@@ -14,7 +14,7 @@
     "firebase": "^10.7.1",
     "graphql": "^16.11.0",
     "graphql-request": "^7.3.0",
-    "openai": "^4.20.1",
+    "openai": "^4.104.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "string-similarity": "^4.0.4"

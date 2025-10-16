@@ -130,37 +130,57 @@ export async function addMockJobs() {
     },
   ];
 
-  console.log('Adding mock jobs to Firestore...');
+  console.log('🔄 Adding mock jobs to Firestore with ChatGPT scoring...\n');
 
   for (const mockJob of mockJobs) {
-    // Calculate score
-    const { total, breakdown } = calculateJobScore(mockJob, DEFAULT_SETTINGS);
+    console.log(`\n📝 Processing: ${mockJob.title}`);
+    console.log(`   Budget: ${mockJob.budget > 0 ? `$${mockJob.budget}` : 'Not specified'}`);
 
-    const jobWithScore = {
-      ...mockJob,
-      score: total,
-      scoreBreakdown: breakdown,
-    };
+    try {
+      // Calculate score with ChatGPT (will fallback to rules if API fails)
+      const { total, breakdown } = await calculateJobScore(mockJob, DEFAULT_SETTINGS, true);
 
-    // Apply hard filters
-    const classification = applyHardFilters(
-      jobWithScore as any,
-      DEFAULT_SETTINGS
-    );
+      const jobWithScore = {
+        ...mockJob,
+        score: total,
+        scoreBreakdown: breakdown,
+      };
 
-    const finalJob = {
-      ...jobWithScore,
-      autoClassification: classification,
-      finalClassification: classification,
-      scoredAt: Timestamp.now(),
-      postedAt: Timestamp.fromDate(jobWithScore.postedAt),
-      fetchedAt: Timestamp.fromDate(jobWithScore.fetchedAt),
-      status: 'scored',
-    };
+      // Apply hard filters
+      const classification = applyHardFilters(
+        jobWithScore as any,
+        DEFAULT_SETTINGS
+      );
 
-    await addDoc(collection(db, 'jobs'), finalJob);
-    console.log(`✅ Added: ${mockJob.title} (Score: ${total})`);
+      const finalJob = {
+        ...jobWithScore,
+        autoClassification: classification,
+        finalClassification: classification,
+        scoredAt: Timestamp.now(),
+        postedAt: Timestamp.fromDate(jobWithScore.postedAt),
+        fetchedAt: Timestamp.fromDate(jobWithScore.fetchedAt),
+        status: 'scored',
+      };
+
+      await addDoc(collection(db, 'jobs'), finalJob);
+      console.log(`   ✅ Score: ${total}/100 (${classification})`);
+
+      // Show AI-powered dimensions
+      if (jobWithScore.estimatedEHR) {
+        console.log(`   💰 EHR: $${jobWithScore.estimatedEHR}/hr (${breakdown.ehrPotential}/15)`);
+      }
+      if (jobWithScore.jobClarity) {
+        console.log(`   📦 Clarity: ${jobWithScore.jobClarity.total} boxes (${breakdown.jobClarity}/15)`);
+      }
+      if (jobWithScore.detectedOutcomes) {
+        console.log(`   🎯 Impact: ${jobWithScore.detectedOutcomes.length} outcomes (${breakdown.businessImpact}/15)`);
+      }
+
+    } catch (error) {
+      console.error(`   ❌ Error processing ${mockJob.title}:`, error);
+      throw error;
+    }
   }
 
-  console.log('✅ Mock data added successfully!');
+  console.log('\n✅ Mock data added successfully with ChatGPT scoring!');
 }

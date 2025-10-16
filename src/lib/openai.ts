@@ -132,16 +132,32 @@ function buildScoringPrompt(
 - 7 pts: EHR $40-59/hr
 - 3 pts: EHR below $40/hr
 
-**Estimation Rules:**
-1. If budget specified: Use it as baseline
-2. If budget not specified: Estimate based on scope/complexity
-3. Consider project complexity to estimate hours:
-   - Simple landing page: 15-25 hours
-   - Multi-page website: 30-50 hours
-   - Portal/dashboard: 40-80 hours
-   - Complex system: 80-150 hours
+**CRITICAL: Estimation Rules (follow in order):**
+1. **If budget IS specified in description or budget field:**
+   - USE THAT EXACT BUDGET as estimatedPrice (don't guess higher/lower)
+   - Look for phrases like "budget is $X", "$X budget", "looking for $X"
+   - Estimate hours based on scope/complexity
+   - Calculate EHR = budget / estimatedHours
+
+2. **If budget NOT specified:**
+   - Estimate price based on scope/complexity
+   - Estimate hours based on deliverables
+
+3. **Hour estimation guidelines by complexity:**
+   - Quick fix/small task: 1-5 hours
+   - Simple landing page (1-3 pages): 15-25 hours
+   - Multi-page website (5-10 pages): 25-40 hours
+   - Multi-page with CMS/blog: 30-45 hours
+   - Portal/dashboard with features: 40-60 hours
+   - Complex portal with integrations: 60-100 hours
+   - Enterprise system: 100-150+ hours
+
+**IMPORTANT:** Be conservative with hour estimates to favor higher EHR. If scope seems medium, estimate on the lower end of the range.
+
 4. Calculate EHR = estimatedPrice / estimatedHours
 5. Round EHR to nearest whole number
+
+**IMPORTANT:** If description says "tight budget", "cheap", "low budget", or budget is very low for scope → trust that signal and score accordingly (likely 3-7 pts)
 
 **Output Required:**
 - score: 0-15
@@ -156,34 +172,39 @@ function buildScoringPrompt(
 
 **Goal:** How well-defined is the job? How many "boxes" are ticked?
 
+**IMPORTANT:** Focus on clarity and planning signals. Light platform mentions (Webflow, Shopify) are fine, but AVOID rewarding deeply technical requirements like bug fixes, PRs, technical specifications, or jobs that sound like they were written by/for developers.
+
 **Count These Signals:**
 
-**Technical Signals** (specific tools/deliverables mentioned):
-- Platforms: webflow, shopify, wordpress, etc.
-- Features: portal, dashboard, landing page, cms, blog, forms, etc.
-- Services: page speed, seo, optimization, integration, automation, etc.
+**Platform Signals (LIGHT technical mentions only - max 2 points):**
+- Platforms/tools: webflow, shopify, wordpress (these are good)
+- High-level features: portal, dashboard, landing page, cms, blog
+- DO NOT count: specific frameworks, version numbers, technical jargon, bug fixes, PRs
 
-**Clarity Signals** (shows planning):
-- Specific quantities: "5 pages", "10 sections"
-- Timeline: "3 weeks", "by January"
-- Quality descriptors: "professional", "modern", "clean"
-- Requirements: "mobile responsive", "forms", "responsive"
-- Features list: enumerates specific features
+**Clarity Signals (PRIMARY - these show professional planning):**
+- Specific quantities: "5 pages", "10 sections", "8-10 pages"
+- Timeline: "3 weeks", "by January", "flexible timeline"
+- Scope definition: clear deliverables, phases, milestones
+- Quality descriptors: "professional", "modern", "clean", "high-quality"
+- Requirements: "mobile responsive", "lead capture forms", "secure login"
+- Context: describes current situation, why they need this
 
 **Scoring Guidelines:**
-- 15 pts: 6+ total matches (very clear)
-- 14 pts: 4-5 matches (clear)
-- 13 pts: 3 matches (good)
-- 10 pts: 2 matches (some clarity)
-- 7 pts: 1 match (minimal)
-- 3 pts: 0 matches (vague)
+- 15 pts: 7+ clarity signals + light platform mentions (highly professional)
+- 14 pts: 5-6 clarity signals (well-planned)
+- 13 pts: 3-4 clarity signals (decent planning)
+- 10 pts: 2 clarity signals (some structure)
+- 7 pts: 1 clarity signal (minimal)
+- 3 pts: 0 clarity signals OR heavily technical (vague or tech-focused)
+
+**PENALTY:** If job mentions bug fixes, pull requests, technical specs, or deep technical requirements → reduce score by 3-5 points (cap at 3 pts minimum)
 
 **Output Required:**
 - score: 0-15
-- technicalMatches: Count of technical signals found
-- clarityMatches: Count of clarity signals found
-- totalMatches: Sum of both
-- reasoning: List the actual signals you found
+- technicalMatches: Count of LIGHT platform mentions (webflow, shopify, etc.)
+- clarityMatches: Count of planning/clarity signals found
+- totalMatches: Sum of both (but clarity signals weighted higher)
+- reasoning: List the actual clarity signals you found
 
 ---
 
@@ -191,34 +212,42 @@ function buildScoringPrompt(
 
 **Goal:** Does this solve a business problem or just hire a coder?
 
-**Look For Business Outcomes:**
-1. **Revenue outcomes:** leads, sales, conversions, customers, bookings, revenue, generate
-2. **Efficiency outcomes:** save time, automate, streamline, reduce, faster, organize, manage
-3. **Growth outcomes:** scale, grow, expand, increase, improve, boost, enhance
-4. **Metrics outcomes:** track, analytics, reporting, KPI, measure
+**THIS IS THE MOST IMPORTANT DIMENSION - We prefer business outcomes over technical tasks.**
 
-**Look For Business Context:**
-- Phrases like: "our business", "our company", "our team", "our clients", "help us"
+**Strong Business Outcomes (look for these FIRST):**
+1. **Revenue outcomes:** leads, sales, conversions, customers, bookings, revenue, generate, acquire
+2. **Efficiency outcomes:** save time, automate, streamline, reduce, faster, organize, manage, simplify
+3. **Growth outcomes:** scale, grow, expand, increase, improve, boost, enhance, launch
+4. **Metrics outcomes:** track, analytics, reporting, KPI, measure, insights
+5. **Customer/Client impact:** improve experience, satisfy customers, serve clients better
 
-**Red Flags (Technical-Only):**
-- "need developer", "need programmer", "looking for developer"
-- "must know [technology]", "experience in [technology]"
-- Focus on tech stack instead of outcomes
+**Business Context (strong positive signal):**
+- "our business", "our company", "our team", "our clients", "help us", "we need"
+- Describes current business pain point or goal
+- Explains WHY they need this (not just WHAT they need)
+
+**MAJOR Red Flags (Technical-Only - heavily penalize):**
+- "need developer", "need programmer", "looking for developer/coder"
+- "must know [technology]", "experience in [framework]", "skilled in [language]"
+- Bug fixes, pull requests (PRs), technical specifications
+- Focus on technical requirements instead of business outcomes
+- Reads like a job description for a developer role
+- Heavy technical jargon that sounds like it was written by/for developers
 
 **Scoring Guidelines:**
-- 15 pts: Multiple categories + business context
-- 12 pts: 2-3 outcome categories
-- 8 pts: 1 outcome category
-- 5 pts: Vague outcomes
-- 0 pts: Technical-only (no business context)
+- 15 pts: 3+ outcome categories + clear business context (strong business focus)
+- 13 pts: 2-3 outcome categories + some context (good business focus)
+- 10 pts: 1-2 outcome categories (some business awareness)
+- 5 pts: Vague outcomes or mostly technical with minor business mention
+- 0 pts: Technical-only job (hiring a developer, not solving a problem)
 
-**Special Rule:** If technical-only flags detected AND no business outcomes → score = 0
+**Special Rule:** If ANY technical-only red flags detected (bug fixes, PRs, "need developer", heavy tech specs) AND no clear business outcomes → score = 0
 
 **Output Required:**
 - score: 0-15
-- detectedOutcomes: Array of outcome keywords found
-- isTechnicalOnly: true if technical-only job detected
-- reasoning: Explain what outcomes were found or why it's technical-only
+- detectedOutcomes: Array of specific outcome phrases found (e.g., "generate leads", "streamline communications")
+- isTechnicalOnly: true if this is a technical-task job (red flags present, no business context)
+- reasoning: Explain what business outcomes were found OR why it's technical-only
 
 ---
 
