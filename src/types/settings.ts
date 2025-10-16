@@ -7,6 +7,7 @@ export interface Settings {
     speedSEO: string[];
     automation: string[];
     vertical: string[];
+    appDevelopment: string[];
   };
 
   timeWindow: number;
@@ -83,9 +84,10 @@ export interface PricingBand {
 export const DEFAULT_SETTINGS: Settings = {
   keywords: {
     wideNet: [
-      'website redesign OR new website OR landing page',
+      'website redesign OR new website OR landing page OR website',
       'React OR Vue OR Angular OR Next.js',
       'web development OR full stack',
+      'web app OR web application',
     ],
     webflow: ['webflow OR web flow OR webflo'],
     portals: [
@@ -94,7 +96,6 @@ export const DEFAULT_SETTINGS: Settings = {
       'secure login OR file sharing',
     ],
     ecommerce: [
-      'shopify speed OR shopify optimization',
       'checkout optimization OR conversion optimization',
       'online booking OR appointment scheduling',
     ],
@@ -104,11 +105,15 @@ export const DEFAULT_SETTINGS: Settings = {
     ],
     automation: [
       'zapier OR make OR integromat',
-      'gohighlevel OR GHL OR crm integration',
+      'crm integration',
     ],
     vertical: [
       'video production portal OR clinic portal',
       'patient portal OR contractor website',
+    ],
+    appDevelopment: [
+      'app development OR custom app',
+      'mobile app OR progressive web app OR PWA',
     ],
   },
 
@@ -121,6 +126,8 @@ export const DEFAULT_SETTINGS: Settings = {
       'wix',
       'squarespace',
       'elementor',
+      'shopify',
+      'gohighlevel',
       'bug',
       'fix',
       'cheap',
