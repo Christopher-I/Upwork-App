@@ -293,7 +293,7 @@ function ScoreItem({
           {score}/{max}
         </span>
       </div>
-      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
         <div
           className={`h-full transition-all ${
             isNegative

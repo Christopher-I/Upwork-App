@@ -24,6 +24,7 @@ export default {
         success: {
           50: '#ECFDF5',
           100: '#D1FAE5',
+          500: '#10B981',   // For progress bars
           600: '#10B981',
           700: '#059669',
           800: '#047857',
@@ -31,6 +32,7 @@ export default {
         primary: {
           50: '#EFF6FF',
           100: '#DBEAFE',
+          500: '#3B82F6',   // For progress bars
           600: '#2563EB',
           700: '#1D4ED8',
           800: '#1E40AF',
@@ -38,12 +40,14 @@ export default {
         warning: {
           50: '#FFFBEB',
           100: '#FEF3C7',
+          500: '#F59E0B',   // For progress bars
           600: '#F59E0B',
           700: '#D97706',
         },
         danger: {
           50: '#FEF2F2',
           100: '#FEE2E2',
+          500: '#EF4444',   // For progress bars
           600: '#EF4444',
           700: '#DC2626',
         },
