@@ -15,6 +15,7 @@ functions/.env
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+*-firebase-adminsdk*.json
 
 # Build output
 dist/
