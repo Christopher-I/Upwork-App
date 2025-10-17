@@ -157,8 +157,8 @@ ${pricingGuidance}
    Start with: "Hi there, I'm Chris, a senior designer and developer who builds cinematic, conversion-driven landing pages for premium tech and hardware brands."
    Then add 1 sentence about how you help teams like theirs.
 
-2. **Portfolio Link**
-   "You can explore my full project list here: https://docs.google.com/document/d/1Pij2NHZTcbhaAna447cZqVPbr7HZJA2t-DuoU9z06Wc/edit?usp=sharing"
+2. **Portfolio Website Link**
+   "You can see examples of my work here: chrisigbojekwe.com"
 
 3. **Project Vision (2-3 sentences)**
    Paint a CINEMATIC, VISUAL picture of what you'd build for them.
@@ -187,6 +187,7 @@ ${pricingGuidance}
 
    Portfolio website: https://chrisigbojekwe.com
    GitHub: https://github.com/Christopher-I
+   You can explore my full project list here: https://docs.google.com/document/d/1Pij2NHZTcbhaAna447cZqVPbr7HZJA2t-DuoU9z06Wc/edit?usp=sharing
 
 **TONE:**
 - Creative and visual (not corporate)
