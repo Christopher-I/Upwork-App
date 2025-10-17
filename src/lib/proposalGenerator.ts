@@ -74,6 +74,7 @@ CRITICAL RULES:
 6. Use design-forward language (not generic dev talk)
 7. Make them VISUALIZE the outcome they'll get, not just what you'll create
 8. Never use double periods or awkward punctuation
+9. MANDATORY: Add blank line between each paragraph for readability (intro, pain, vision, social proof, portfolio, CTA, pricing, signature)
 
 MUST INCLUDE IN EVERY PROPOSAL:
 - Pain embedded in intro: "Hi there, I'm Chris—I help [their team type] eliminate [their pain] with [solution type]"
@@ -161,6 +162,8 @@ ${pricingGuidance}
 
 **PROPOSAL STRUCTURE (FOLLOW EXACTLY - CLASSIC CONSULTANT FLOW):**
 
+**FORMATTING RULE: Add a blank line between EVERY section below for readability.**
+
 1. **Introduction with Pain Embedded (1-2 sentences)**
    Start with a warm introduction that IMMEDIATELY signals you understand their pain.
    - Format: "Hi there, I'm Chris—I help [their type of team/business] solve [their specific pain] with [your solution type]."
@@ -171,6 +174,7 @@ ${pricingGuidance}
      * "Hi there, I'm Chris—I help tech companies turn slow-loading landing pages into high-converting lead machines."
      * "Hi there, I'm Chris—I help hardware brands launch products with cinematic websites that drive pre-orders from day one."
    - If no clear pain, focus on the opportunity: "Hi there, I'm Chris—I help startups launching new products create landing pages that turn visitors into customers."
+   - **END WITH BLANK LINE**
 
 2. **Pain Point Acknowledgment with Insight (1-2 sentences)**
    Show you understand their SPECIFIC problem and its BUSINESS IMPACT (not just restating the job post).
@@ -181,6 +185,7 @@ ${pricingGuidance}
      * Urgency: "launching soon", "competitive pressure", "ASAP"
    - Add a transition word to bridge naturally: "I see...", "I understand...", "I noticed..."
    - Example: "I see you're dealing with slow load times that are costing you conversions—right now, visitors are bouncing before they even see your product."
+   - **END WITH BLANK LINE**
 
 3. **Vision + Solution Tied to Outcome (2-3 sentences)**
    Paint a CINEMATIC, VISUAL picture of what you'll build that DIRECTLY solves their pain and delivers their outcome.
@@ -192,6 +197,7 @@ ${pricingGuidance}
      * "I'd build you a real-time inventory portal with automated low-stock alerts and drag-and-drop product management—eliminating those stock issues and saving your team hours every week."
      * "For [Company], I'd design a scroll-triggered product reveal that loads in under 2 seconds and guides visitors straight to your demo form—turning browsers into qualified leads."
      * "I'd create an immersive landing page with parallax storytelling that showcases your hardware's features and drives pre-orders from day one."
+   - **END WITH BLANK LINE**
 
 4. **Social Proof with Metrics (1 sentence - MANDATORY)**
    Name-drop companies/organizations AND include a quantifiable result or outcome.
@@ -215,9 +221,11 @@ ${pricingGuidance}
    - "I've delivered similar conversion-focused landing pages for world-class organizations like Techstars startups, increasing sign-up rates by 55% on average."
    - "I've created similar product experiences for world-class organizations like the EU Green Project, achieving 3x faster load times and 60% higher engagement."
    - "Using techniques I refined building dashboards for world-class organizations like Coinbase, I helped their teams save 12 hours per week on reporting."
+   - **END WITH BLANK LINE**
 
 5. **Portfolio Website Link**
    "You can see examples of my work here: chrisigbojekwe.com"
+   - **END WITH BLANK LINE**
 
 6. **Call to Action (1 sentence)**
    Make it easy to respond with a specific, low-commitment next step.
@@ -228,10 +236,12 @@ ${pricingGuidance}
      * "walk through the user journey"
      * "review your product positioning"
    - Example: "Would you be open to a 15-minute call to map out the inventory flow? You can grab a time here: calendly.com/seedapp."
+   - **END WITH BLANK LINE**
 
 7. **Pricing**
    "Minimum project: $2,500"
    (Or if higher budget: "Project range: $X - $X")
+   - **END WITH BLANK LINE**
 
 8. **Signature**
    Best regards,
