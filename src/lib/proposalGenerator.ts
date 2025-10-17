@@ -185,7 +185,6 @@ ${pricingGuidance}
    Chris Igbojekwe
    Senior Designer & Developer
 
-   Portfolio website: https://chrisigbojekwe.com
    GitHub: https://github.com/Christopher-I
    You can explore my full project list here: https://docs.google.com/document/d/1Pij2NHZTcbhaAna447cZqVPbr7HZJA2t-DuoU9z06Wc/edit?usp=sharing
 
