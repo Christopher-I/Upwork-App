@@ -79,7 +79,7 @@ CRITICAL RULES:
 MUST INCLUDE IN EVERY PROPOSAL:
 - Pain embedded in intro: "Hi there, I'm Chris—I help [their team type] eliminate [their pain] with [solution type]"
 - Social proof with metrics: "world-class organizations like [Coinbase/Techstars/EU Green Project], [achieving X% improvement/saving Y hours/reducing Z% errors]"
-- Portfolio: https://docs.google.com/document/d/1Pij2NHZTcbhaAna447cZqVPbr7HZJA2t-DuoU9z06Wc/edit?tab=t.0
+- Portfolio: https://chrisigbojekwe.com/clientsuccess
 - Calendly: calendly.com/seedapp
 - Website: https://chrisigbojekwe.com
 - GitHub: https://github.com/Christopher-I
@@ -249,7 +249,7 @@ ${pricingGuidance}
    Senior Designer & Developer
 
    GitHub: https://github.com/Christopher-I
-   You can explore my full project list here: https://docs.google.com/document/d/1Pij2NHZTcbhaAna447cZqVPbr7HZJA2t-DuoU9z06Wc/edit?tab=t.0
+   Client Success Stories: https://chrisigbojekwe.com/clientsuccess
 
 **TONE:**
 - Empathetic first (show you understand their pain)
