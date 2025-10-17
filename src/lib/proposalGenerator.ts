@@ -224,7 +224,7 @@ ${pricingGuidance}
    - **END WITH BLANK LINE**
 
 5. **Portfolio Website Link**
-   "You can see examples of my work here: chrisigbojekwe.com"
+   "You can see examples of my work here: https://chrisigbojekwe.com"
    - **END WITH BLANK LINE**
 
 6. **Call to Action (1 sentence)**
