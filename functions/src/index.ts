@@ -289,7 +289,31 @@ export const fetchUpworkJobs = functions.https.onCall(
       }
 
       const storedTokens = tokenDoc.data();
-      console.log('Loaded stored tokens from Firestore');
+
+      // Log current token state for debugging
+      console.log('📋 Loaded stored tokens from Firestore');
+      console.log('  - access_token:', storedTokens?.access_token ? storedTokens.access_token.substring(0, 20) + '...' : 'MISSING');
+      console.log('  - refresh_token:', storedTokens?.refresh_token ? storedTokens.refresh_token.substring(0, 20) + '...' : 'MISSING');
+      console.log('  - expires_at:', storedTokens?.expires_at || 'MISSING');
+
+      // Check if token is expired
+      const now = new Date();
+      const expiresAt = storedTokens?.expires_at ? new Date(storedTokens.expires_at) : null;
+      const isExpired = expiresAt ? expiresAt < now : true;
+
+      if (expiresAt) {
+        const hoursUntilExpiry = (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60);
+        console.log('⏰ Token Status:');
+        console.log('  - Expires at:', expiresAt.toISOString());
+        console.log('  - Current time:', now.toISOString());
+        console.log('  - Is expired?', isExpired ? '❌ YES' : '✅ NO');
+
+        if (!isExpired) {
+          console.log('  - Time until expiry:', hoursUntilExpiry.toFixed(2), 'hours');
+        } else {
+          console.log('  - Expired:', Math.abs(hoursUntilExpiry).toFixed(2), 'hours ago');
+        }
+      }
 
       // Initialize Upwork API client with stored tokens
       const config = {
@@ -305,25 +329,46 @@ export const fetchUpworkJobs = functions.https.onCall(
       const api = new API(config);
 
       // Set access token (will auto-refresh if expired)
-      console.log('Setting up access token with auto-refresh...');
-      const currentTokens: any = await new Promise((resolve) => {
+      console.log('🔄 Setting up access token with auto-refresh...');
+      const currentTokens: any = await new Promise((resolve, reject) => {
         api.setAccessToken((tokenPair: any) => {
-          console.log('Access token ready (refreshed if needed)');
+          console.log('✅ Access token callback received');
+          console.log('  - Returned access_token:', tokenPair?.access_token ? tokenPair.access_token.substring(0, 20) + '...' : 'MISSING');
+          console.log('  - Returned refresh_token:', tokenPair?.refresh_token ? tokenPair.refresh_token.substring(0, 20) + '...' : 'MISSING');
+          console.log('  - Returned expires_in:', tokenPair?.expires_in || 'MISSING');
+          console.log('  - Returned expires_at:', tokenPair?.expires_at || 'MISSING');
           resolve(tokenPair);
         });
       });
 
-      // If tokens were refreshed, save them back to Firestore
-      if (currentTokens.access_token !== storedTokens?.access_token) {
-        console.log('Tokens were refreshed, saving to Firestore...');
-        await db.collection('config').doc('upwork_tokens').update({
-          access_token: currentTokens.access_token,
-          refresh_token: currentTokens.refresh_token,
-          expires_in: currentTokens.expires_in,
-          expires_at: currentTokens.expires_at,
+      // Check if tokens were refreshed (access token changed)
+      const tokenWasRefreshed = currentTokens.access_token !== storedTokens?.access_token;
+
+      if (tokenWasRefreshed) {
+        console.log('🔄 Token was refreshed! Saving new token to Firestore...');
+
+        // CRITICAL FIX: The refresh callback only returns partial data
+        // We must preserve the original refresh_token and calculate new expires_at
+        const newExpiresAt = new Date(Date.now() + (currentTokens.expires_in || 86400) * 1000);
+
+        const updatedTokenData = {
+          access_token: currentTokens.access_token, // New access token
+          refresh_token: storedTokens?.refresh_token, // Keep original - doesn't change on refresh
+          expires_in: currentTokens.expires_in || 86400, // Usually 86400 (24 hours)
+          expires_at: newExpiresAt.toISOString(), // Calculate new expiration
           updated_at: new Date(),
-        });
-        console.log('Updated tokens saved');
+        };
+
+        console.log('💾 Saving updated tokens:');
+        console.log('  - new access_token:', updatedTokenData.access_token.substring(0, 20) + '...');
+        console.log('  - kept refresh_token:', updatedTokenData.refresh_token ? updatedTokenData.refresh_token.substring(0, 20) + '...' : 'MISSING');
+        console.log('  - expires_in:', updatedTokenData.expires_in, 'seconds');
+        console.log('  - new expires_at:', updatedTokenData.expires_at);
+
+        await db.collection('config').doc('upwork_tokens').update(updatedTokenData);
+        console.log('✅ Updated tokens saved successfully');
+      } else {
+        console.log('ℹ️  Token was not expired, using existing token');
       }
 
       const allSearches = [
