@@ -9,7 +9,7 @@ export function JobCard({ job, onClick }: JobCardProps) {
   // Show star only if ALL three conditions are met:
   // 1. Has open budget
   // 2. Has team language ("we/our")
-  // 3. Market rate estimate is $5,000 or above
+  // 3. Fair Market Value estimate is $5,000 or above
   const hasOpenBudget = (job.scoreBreakdown?.professionalSignals?.openBudget || 0) > 0;
   const hasTeamLanguage = (job.scoreBreakdown?.professionalSignals?.weLanguage || 0) > 0;
   const hasHighMarketRate = (job.estimatedPrice || 0) >= 5000;
@@ -46,7 +46,7 @@ export function JobCard({ job, onClick }: JobCardProps) {
         )}
       </div>
 
-      {/* Inline badges - Score, Market Rate, EHR */}
+      {/* Inline badges - Score, Fair Market Value, EHR */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border ${scoreColorClass}`}>
           {job.score}
@@ -64,7 +64,7 @@ export function JobCard({ job, onClick }: JobCardProps) {
         {job.description}
       </p>
 
-      {/* Professional signals - Show if has open budget AND team language AND $5k+ market rate */}
+      {/* Professional signals - Show if has open budget AND team language AND $5k+ Fair Market Value */}
       {isProfessional && (
         <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
           <span>⭐</span>

@@ -131,10 +131,10 @@ export function JobFilters({ filters, onFilterChange }: JobFiltersProps) {
               />
             </div>
 
-            {/* Market Rate Range */}
+            {/* Fair Market Value Range */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Min Market Rate ($)
+                Min Fair Market Value ($)
               </label>
               <input
                 type="number"
@@ -151,7 +151,7 @@ export function JobFilters({ filters, onFilterChange }: JobFiltersProps) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Max Market Rate ($)
+                Max Fair Market Value ($)
               </label>
               <input
                 type="number"
@@ -284,7 +284,7 @@ export function JobFilters({ filters, onFilterChange }: JobFiltersProps) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="score_high">Score: High to Low</option>
-                <option value="market_rate_high">Market Rate: High to Low</option>
+                <option value="market_rate_high">Fair Market Value: High to Low</option>
                 <option value="newest">Newest First</option>
                 <option value="price_low">Price: Low to High</option>
                 <option value="price_high">Price: High to Low</option>

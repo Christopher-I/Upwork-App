@@ -178,7 +178,7 @@ export function Dashboard() {
       );
     }
 
-    // Market rate range filter
+    // Fair Market Value range filter
     if (filters.minMarketRate > 0) {
       filtered = filtered.filter(
         (job) => (job.estimatedPrice || 0) >= filters.minMarketRate
@@ -340,7 +340,7 @@ export function Dashboard() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-success-700 font-medium mb-1">Avg Market Rate</p>
+                <p className="text-sm text-success-700 font-medium mb-1">Avg Fair Market Value</p>
                 <p className="text-2xl font-bold text-success-900">
                   ${jobs.length > 0 ? Math.round(jobs.reduce((sum, job) => sum + (job.estimatedPrice || 0), 0) / jobs.length).toLocaleString() : 0}
                 </p>

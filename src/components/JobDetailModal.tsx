@@ -232,9 +232,9 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                 </span>
               </div>
 
-              {/* Market Rate Estimate */}
+              {/* Fair Market Value Estimate */}
               <div className="flex items-center justify-between pb-3 border-b border-success-100">
-                <span className="text-gray-600">Market Rate Estimate:</span>
+                <span className="text-gray-600">Fair Market Value:</span>
                 <span className="font-bold text-success-700 text-lg">
                   ${currentJob.estimatedPrice?.toLocaleString() || 'TBD'}
                 </span>

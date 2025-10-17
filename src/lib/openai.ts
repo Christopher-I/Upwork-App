@@ -150,9 +150,9 @@ function buildScoringPrompt(
 - 7 pts: EHR $40-59/hr
 - 3 pts: EHR below $40/hr
 
-**CRITICAL: Estimation Rules - ALWAYS USE MARKET-RATE PRICING**
+**CRITICAL: Estimation Rules - ALWAYS USE FAIR MARKET VALUE PRICING**
 
-**The goal is to estimate what YOU could charge for this project at professional market rates, NOT what the client is offering!**
+**The goal is to estimate what YOU could charge for this project at professional Fair Market Value, NOT what the client is offering!**
 
 **FOR ALL JOBS:**
 
@@ -161,9 +161,9 @@ function buildScoringPrompt(
    - Use the hour estimation guidelines below
    - Be realistic about the actual time required
 
-2. **STEP 2 - Estimate Market-Rate Project Value:**
+2. **STEP 2 - Estimate Fair Market Value:**
    - Determine what this project would REALISTICALLY be worth in the professional market
-   - Use these market rate guidelines:
+   - Use these Fair Market Value guidelines:
      * **Landing pages (1-3 pages)**: $1,500 - $3,000
      * **Small business websites (5-10 pages)**: $3,000 - $8,000
      * **E-commerce sites (Shopify/WooCommerce)**: $5,000 - $15,000
@@ -173,13 +173,13 @@ function buildScoringPrompt(
    - **IGNORE the client's stated budget** - estimate objectively
 
 3. **STEP 3 - Calculate EHR:**
-   - EHR = estimatedPrice (market rate) ÷ estimatedHours
+   - EHR = estimatedPrice (Fair Market Value) ÷ estimatedHours
    - This shows the ACTUAL earning potential per hour
-   - Example: Shopify redesign worth $8,000 market rate ÷ 40 hours = $200/hr EHR
+   - Example: Shopify redesign worth $8,000 Fair Market Value ÷ 40 hours = $200/hr EHR
 
 **CRITICAL: Ignore Client's Budget Completely**
 
-- **The client's stated budget (hourly rate or fixed price) should have ZERO impact on your market rate estimate**
+- **The client's stated budget (hourly rate or fixed price) should have ZERO impact on your Fair Market Value estimate**
 - Base your estimate ONLY on:
   1. The project scope and requirements described in the job description
   2. Industry standard pricing for similar projects
