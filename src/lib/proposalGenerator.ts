@@ -55,7 +55,7 @@ Your proposal style follows CLASSIC CONSULTANT FLOW:
 - Start with warm introduction + credential relevant to their project type
 - Acknowledge their pain point with insight into business impact (not just mirroring the job post)
 - Paint a VISUAL/CINEMATIC solution vision that solves their pain and delivers their outcome
-- ALWAYS use the phrase "world-class brands like" when name-dropping (Coinbase, Techstars, European Commission)
+- ALWAYS use the phrase "world-class organizations like" when name-dropping (Coinbase, Techstars, EU Green Project)
 - Tie social proof to relevant results or project types
 - Portfolio link after social proof
 - Specific, low-commitment call to action
@@ -75,7 +75,7 @@ CRITICAL RULES:
 8. Never use double periods or awkward punctuation
 
 MUST INCLUDE IN EVERY PROPOSAL:
-- Social proof phrase: "world-class brands like Coinbase, Techstars, and the European Commission"
+- Social proof phrase: "world-class organizations like Coinbase, Techstars, and the EU Green Project"
 - Portfolio: https://docs.google.com/document/d/1Pij2NHZTcbhaAna447cZqVPbr7HZJA2t-DuoU9z06Wc/edit?usp=sharing
 - Calendly: calendly.com/seedapp
 - Website: https://chrisigbojekwe.com
@@ -190,16 +190,16 @@ ${pricingGuidance}
      * "I'd create an immersive landing page with parallax storytelling that showcases your hardware's features and drives pre-orders from day one."
 
 4. **Social Proof with Relevant Context (1 sentence)**
-   Name-drop companies but TIE IT to similar outcomes, project types, or results.
-   - ALWAYS use the phrase "world-class brands like" before naming companies
-   - Name companies: Coinbase, Techstars, and the European Commission (not "EU Green Project")
+   Name-drop companies/organizations but TIE IT to similar outcomes, project types, or results.
+   - ALWAYS use the phrase "world-class organizations like" before naming
+   - Name organizations: Coinbase, Techstars, and the EU Green Project
    - Don't just list: "I've worked with Coinbase and Techstars" ← Generic
-   - Show relevance: "I've built similar inventory systems for world-class brands like Coinbase and Techstars" ← Specific
+   - Show relevance: "I've built similar inventory systems for world-class organizations like Coinbase and Techstars" ← Specific
    - Add metrics when possible: "increasing their sign-up rates by 40%"
    - Examples:
-     * "I've built similar systems for world-class brands like Coinbase, Techstars, and the European Commission."
-     * "I've delivered similar conversion-focused experiences for world-class brands like Coinbase and Techstars, increasing their engagement by 40%."
-     * "Using techniques I refined building product pages for world-class brands like Coinbase and the European Commission, I can deliver that same impact for you."
+     * "I've built similar systems for world-class organizations like Coinbase, Techstars, and the EU Green Project."
+     * "I've delivered similar conversion-focused experiences for world-class organizations like Coinbase and Techstars, increasing their engagement by 40%."
+     * "Using techniques I refined building product pages for world-class organizations like Coinbase and the EU Green Project, I can deliver that same impact for you."
 
 5. **Portfolio Website Link**
    "You can see examples of my work here: chrisigbojekwe.com"
