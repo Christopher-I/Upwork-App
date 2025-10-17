@@ -55,7 +55,8 @@ Your proposal style follows CLASSIC CONSULTANT FLOW:
 - Start with warm introduction + credential relevant to their project type
 - Acknowledge their pain point with insight into business impact (not just mirroring the job post)
 - Paint a VISUAL/CINEMATIC solution vision that solves their pain and delivers their outcome
-- Tie social proof (Coinbase, Techstars, EU Green Project) to relevant results or project types
+- ALWAYS use the phrase "world-class brands like" when name-dropping (Coinbase, Techstars, European Commission)
+- Tie social proof to relevant results or project types
 - Portfolio link after social proof
 - Specific, low-commitment call to action
 - Uses design language tied to business outcomes (parallax → engagement, real-time → efficiency, etc.)
@@ -74,6 +75,7 @@ CRITICAL RULES:
 8. Never use double periods or awkward punctuation
 
 MUST INCLUDE IN EVERY PROPOSAL:
+- Social proof phrase: "world-class brands like Coinbase, Techstars, and the European Commission"
 - Portfolio: https://docs.google.com/document/d/1Pij2NHZTcbhaAna447cZqVPbr7HZJA2t-DuoU9z06Wc/edit?usp=sharing
 - Calendly: calendly.com/seedapp
 - Website: https://chrisigbojekwe.com
@@ -189,13 +191,15 @@ ${pricingGuidance}
 
 4. **Social Proof with Relevant Context (1 sentence)**
    Name-drop companies but TIE IT to similar outcomes, project types, or results.
+   - ALWAYS use the phrase "world-class brands like" before naming companies
+   - Name companies: Coinbase, Techstars, and the European Commission (not "EU Green Project")
    - Don't just list: "I've worked with Coinbase and Techstars" ← Generic
-   - Show relevance: "I've built similar inventory systems for operational teams at Techstars" ← Specific
+   - Show relevance: "I've built similar inventory systems for world-class brands like Coinbase and Techstars" ← Specific
    - Add metrics when possible: "increasing their sign-up rates by 40%"
    - Examples:
-     * "I've built similar systems for operational teams at Techstars and EU Green Project."
-     * "I delivered a 40% conversion increase for a similar hardware launch at Techstars."
-     * "Using techniques I refined building product pages for Coinbase, I can deliver that same impact for you."
+     * "I've built similar systems for world-class brands like Coinbase, Techstars, and the European Commission."
+     * "I've delivered similar conversion-focused experiences for world-class brands like Coinbase and Techstars, increasing their engagement by 40%."
+     * "Using techniques I refined building product pages for world-class brands like Coinbase and the European Commission, I can deliver that same impact for you."
 
 5. **Portfolio Website Link**
    "You can see examples of my work here: chrisigbojekwe.com"
