@@ -162,29 +162,32 @@ function assessProposal(proposal: string, jobDescription: string): { score: numb
 
   // 3. Methodology/Process (0-2 pts)
   let methodologyScore = 0;
-  const processIndicators = [
-    /first.*then|start.*by|begin.*with/i,
-    /phase|step|stage|process/i,
-    /implement|build|create|design/i,
-  ];
-  let processFound = 0;
-  processIndicators.forEach(pattern => {
-    if (proposal.match(pattern)) {
-      processFound++;
-    }
-  });
-  if (processFound >= 2) {
-    methodologyScore += 1.0;
-    feedback.push('✅ Shows clear process/methodology');
+
+  // Check for numbered deliverables format (BEST indicator of clear process)
+  if (proposal.match(/1\).*2\).*3\)/)) {
+    methodologyScore += 1.5;
+    feedback.push('✅ Shows clear process with numbered deliverables');
   } else {
-    feedback.push('❌ Missing clear process description');
+    const processIndicators = [
+      /first.*then|start.*by|begin.*with/i,
+      /phase|step|stage|process/i,
+      /implement|build|create|design/i,
+    ];
+    let processFound = 0;
+    processIndicators.forEach(pattern => {
+      if (proposal.match(pattern)) {
+        processFound++;
+      }
+    });
+    if (processFound >= 2) {
+      methodologyScore += 1.0;
+      feedback.push('✅ Shows clear process/methodology');
+    } else {
+      feedback.push('❌ Missing clear process description');
+    }
   }
 
-  // Check for implementation details
-  if (proposal.match(/Webflow.*component|element|section|layout/i)) {
-    methodologyScore += 0.5;
-    feedback.push('✅ Includes Webflow implementation details');
-  }
+  // Check for references specific page count
   if (proposal.match(/\d+\s*pages?|\d+-\d+\s*pages?/i)) {
     methodologyScore += 0.5;
     feedback.push('✅ References specific page count');

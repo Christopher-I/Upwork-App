@@ -144,17 +144,29 @@ Your goal is to write a 9/10+ proposal that makes the client say "I MUST intervi
    - Reference exact pain points from their job description
 
 3. **Detailed Solution with Process** (2-3 sentences - THE MOST IMPORTANT SECTION)
+   - **CRITICAL: MUST use numbered deliverable format "1) X, 2) Y, 3) Z" for clarity**
    - This is where you demonstrate deep expertise
    - Use their exact technical terminology (mention EVERY technology from the job description)
-   - Show your process/methodology step-by-step with implementation details
-   - List 3-5 specific deliverables from their requirements (use numbered format: "1) X, 2) Y, 3) Z")
+   - List 3-5 specific deliverables from their requirements in numbered format
    - Include technical implementation details and how you'll integrate components
-   - Example for blockchain job: "I'll architect a multi-wallet orchestration engine using Solana's Web3.js library and RPC endpoints, implement randomized execution timing (50-500ms jitter), configure Helius WebSocket subscriptions for real-time Pump.fun monitoring, build the React dashboard with P&L tracking and manual buy/sell controls, and create MEV-resistant transaction routing with configurable slippage parameters"
-   - Example for Webflow job: "I'll design a conversion-optimized information architecture across all 8-10 pages, implement a custom Webflow CMS for your blog with category filtering, optimize Core Web Vitals to achieve sub-2s load times, build strategic CTAs at key friction points, and set up conversion rate tracking to measure lead generation performance"
+   - Example for Webflow job: "For [Company], I'll build: 1) 8-10 Webflow pages optimized for SaaS conversion, 2) blog with CMS setup and categorization, 3) page speed optimization (sub-2s loads via Core Web Vitals), 4) conversion rate optimization with strategic lead forms, and 5) analytics to track lead generation performance."
 
-4. **Specific Metrics with Context** (1 sentence)
-   - Include numbers AND the specific outcome they achieved
-   - Tie to similar project type: "I recently built a similar Shopify checkout flow for a sports retailer, reducing cart abandonment 42% and improving page speed 65%, resulting in $380K additional annual revenue"
+4. **Social Proof: Name-Dropping + Metrics** (2 SEPARATE sentences)
+   - **Sentence 1 (optional - use ONLY if relevant to this job):**
+     * Name-drop 1-2 companies that are relevant to this specific job type
+     * Coinbase → relevant for: fintech, crypto, blockchain, payments, enterprise dashboards
+     * Techstars → relevant for: SaaS, startups, funded companies, growth/marketing sites
+     * EU Green Project → relevant for: sustainability, environmental tech, EU clients, government projects
+     * If NONE are relevant → SKIP this sentence entirely and go straight to sentence 2
+     * Format: "I've worked with [Company1] and [Company2]." (PERIOD - then STOP)
+     * ❌ NEVER say: "world-class organizations like"
+     * ❌ NEVER add metrics in this sentence
+   - **Sentence 2 (ALWAYS include - required):**
+     * Share specific results in COMPLETELY SEPARATE sentence WITHOUT company names
+     * Format: "Recently, I helped a [industry] client [achieve specific results with irregular numbers]."
+     * Example: "Recently, I helped a SaaS client increase qualified leads by 52% and improve conversion rates by 43%."
+     * Use irregular numbers (52%, 38%, 67%, 2.3x) not round (50%, 40%, 2x)
+     * ❌ NEVER mention Techstars/Coinbase/EU Green Project in this sentence
 
 5. **Portfolio Link** (1 sentence)
    - "My portfolio includes [X] similar projects: [link]" OR "You can see examples of my work here: [link]"
@@ -189,7 +201,11 @@ Your goal is to write a 9/10+ proposal that makes the client say "I MUST intervi
 MUST INCLUDE IN EVERY PROPOSAL:
 - Pain embedded in intro: "Hi, I help [their team type] eliminate [their pain] with [solution type]"
 - **Platform adaptation**: If job mentions specific platform/tool (GHL, Bubble, Webflow, React, etc.), incorporate it naturally into intro and solution sections
-- Social proof with metrics: "world-class organizations like [Coinbase/Techstars/EU Green Project], [achieving X% improvement/saving Y hours/reducing Z% errors]"
+- **CRITICAL: Numbered deliverables format** - Use "1) X, 2) Y, 3) Z" format in solution section
+- **Social proof (2 SEPARATE sentences)**:
+  - Sentence 1 (optional): Name-drop 1-2 relevant companies (Coinbase/Techstars/EU Green Project) ONLY if relevant. Format: "I've worked with [Company]." NO metrics in this sentence!
+  - Sentence 2 (required): "Recently, I helped a [industry] client [achieve results with irregular numbers 52%, 38%, 67%]." NO company names in this sentence!
+  - ❌ NEVER say "world-class organizations like"
 - Portfolio: chrisigbojekwe.com/clientsuccess
 - Calendly: calendly.com/seedapp
 - Website: chrisigbojekwe.com
@@ -302,8 +318,8 @@ Examples:
 
 **Social Proof Adaptation:**
 - If job mentions specific platform, adapt the social proof example to match
-- Example: "GHL expert needed" → "I've built similar GHL automation systems for world-class organizations like Techstars, reducing manual work by 15 hours per week"
-- Keep the metrics, just adapt the platform/context
+- Example: "GHL expert needed" → "Recently, I helped a marketing agency client build a GoHighLevel automation system that reduced manual work by 15 hours per week and increased lead-to-booking rates by 52%."
+- Keep the metrics, just adapt the platform/context to the job
 
 ---
 
@@ -361,37 +377,21 @@ Examples:
    - **Use platform terminology naturally** - don't force it if not mentioned
    - **END WITH BLANK LINE**
 
-4. **Social Proof with Metrics (1 sentence - MANDATORY)**
-   Name-drop companies/organizations AND include a quantifiable result or outcome.
-   - ALWAYS use the phrase "world-class organizations like" before naming
-   - ALWAYS include a metric or specific outcome (this is MANDATORY, not optional)
-   - Pick the most relevant organization based on project type:
-     * Portals/Dashboards/Internal Tools → Use Coinbase (fintech credibility)
-     * Landing Pages/Marketing Sites → Use Techstars (startup/growth credibility)
-     * Complex/Government Projects → Use EU Green Project (enterprise credibility)
-
-   **METRIC GUIDELINES (Use these realistic ranges):**
-   - Conversion improvements: 40-60% increase
-   - Engagement improvements: 50-75% increase
-   - Time savings: 10-15 hours per week
-   - Speed improvements: 2-3x faster load times
-   - Error reduction: 80-90% fewer errors
-   - User satisfaction: 95%+ positive feedback
-
-   **EXAMPLES WITH METRICS:**
-   - "I've built similar inventory portals for world-class organizations like Coinbase, reducing manual data entry by 15 hours per week and eliminating 90% of stock errors."
-   - "I've delivered similar conversion-focused landing pages for world-class organizations like Techstars startups, increasing sign-up rates by 55% on average."
-   - "I've created similar product experiences for world-class organizations like the EU Green Project, achieving 3x faster load times and 60% higher engagement."
-   - "Using techniques I refined building dashboards for world-class organizations like Coinbase, I helped their teams save 12 hours per week on reporting."
-
-   **ADAPT TO PLATFORM IF MENTIONED:**
-   - If job mentions specific platform, blend it into social proof naturally
-   - Examples:
-     * GHL job → "I've built similar GoHighLevel automation systems for world-class organizations like Techstars, increasing lead-to-booking rates by 50% and saving 12 hours per week on manual follow-ups."
-     * Bubble job → "I've developed similar Bubble applications for world-class organizations like Techstars startups, reducing development costs by 60% while maintaining enterprise-grade functionality."
-     * Webflow job → "I've designed similar Webflow sites for world-class organizations like Techstars, achieving 3x faster load times and 55% higher conversion rates."
-
-   - **Don't lie about companies** - keep using Coinbase/Techstars/EU Green Project, just adapt the context
+4. **Social Proof: Name-Dropping + Metrics (2 SEPARATE sentences - MANDATORY)**
+   - **Sentence 1 (optional - use ONLY if relevant):**
+     * Name-drop 1-2 companies ONLY if relevant to this job type
+     * Coinbase → fintech, crypto, blockchain, payments, enterprise dashboards
+     * Techstars → SaaS, startups, funded companies, growth/marketing sites
+     * EU Green Project → sustainability, environmental tech, EU clients, government
+     * If NONE relevant → SKIP and go to sentence 2
+     * Format: "I've worked with [Company]." (PERIOD - STOP)
+     * ❌ NEVER: "world-class organizations like"
+     * ❌ NEVER add metrics here
+   - **Sentence 2 (ALWAYS required):**
+     * Format: "Recently, I helped a [industry] client [achieve results with irregular numbers]."
+     * Example: "Recently, I helped a SaaS client increase qualified leads by 52% and improve conversion rates by 43%."
+     * Use irregular numbers (52%, 38%, 67%, 2.3x) NOT round (50%, 40%, 2x)
+     * ❌ NEVER mention company names in this sentence
    - **END WITH BLANK LINE**
 
 5. **Portfolio Website Link**
