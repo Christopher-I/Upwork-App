@@ -62,7 +62,7 @@ export async function scoreJobWithClaude(
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022', // Latest Sonnet model
+      model: 'claude-3-7-sonnet-20250219', // Latest Sonnet model (Feb 2025)
       max_tokens: 2048,
       temperature: 0.3, // Low temperature for consistency (Claude uses 0-1 scale)
       system: systemPrompt,

@@ -2,8 +2,16 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Job } from '../types/job';
 import { Settings } from '../types/settings';
 
+// Support both browser (Vite) and Node (testing) environments
+const getApiKey = () => {
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env.VITE_ANTHROPIC_API_KEY;
+  }
+  return process.env.VITE_ANTHROPIC_API_KEY;
+};
+
 const anthropic = new Anthropic({
-  apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
+  apiKey: getApiKey(),
   dangerouslyAllowBrowser: true, // Only for development/testing
 });
 
@@ -27,7 +35,7 @@ export async function generateProposalWithClaude(
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022', // Latest Sonnet model
+      model: 'claude-3-7-sonnet-20250219', // Latest Sonnet model (Feb 2025)
       max_tokens: 2048,
       temperature: 0.7, // Higher temperature for creative proposals
       system: systemPrompt,
@@ -42,6 +50,8 @@ export async function generateProposalWithClaude(
     // Extract text from Claude's response
     const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
 
+    console.log('Raw Claude response:', responseText);
+
     // Claude should return JSON wrapped in <response> tags or plain JSON
     let jsonText = responseText;
 
@@ -49,11 +59,58 @@ export async function generateProposalWithClaude(
     const responseMatch = responseText.match(/<response>([\s\S]*?)<\/response>/);
     if (responseMatch) {
       jsonText = responseMatch[1].trim();
+      console.log('Extracted from <response> tags');
     }
 
-    // Parse JSON
-    const result = JSON.parse(jsonText);
-    return result as ProposalResult;
+    // Also try to extract from ```json code blocks
+    const codeBlockMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```/);
+    if (codeBlockMatch) {
+      jsonText = codeBlockMatch[1].trim();
+      console.log('Extracted from code block');
+    }
+
+    console.log('JSON text before cleaning:', jsonText.substring(0, 200));
+
+    // Fix: Claude returns JSON with literal newlines in strings, which breaks JSON.parse()
+    // We need to properly escape them, but only within string values (not the JSON structure)
+    // Use a more robust approach: parse it manually by fixing string content
+
+    try {
+      // First attempt: try parsing as-is
+      const result = JSON.parse(jsonText);
+      console.log('✅ Parsed successfully without cleaning');
+      return result as ProposalResult;
+    } catch (firstError) {
+      console.log('First parse failed, attempting to fix newlines in strings...');
+
+      // Second attempt: Use eval with proper string escaping
+      // This is safe because we control the source (Claude's response)
+      try {
+        // Replace literal newlines within string values with \n
+        // This regex finds quoted strings and escapes their contents
+        const fixedJson = jsonText.replace(
+          /"content":\s*"([^"]*)"/gs,
+          (match, content) => {
+            // Escape newlines, tabs, and carriage returns in the content field
+            const escapedContent = content
+              .replace(/\n/g, '\\n')
+              .replace(/\r/g, '\\r')
+              .replace(/\t/g, '\\t');
+            return `"content": "${escapedContent}"`;
+          }
+        );
+
+        console.log('Fixed JSON (first 200 chars):', fixedJson.substring(0, 200));
+        const result = JSON.parse(fixedJson);
+        console.log('✅ Parsed successfully after fixing newlines');
+        return result as ProposalResult;
+      } catch (secondError) {
+        console.error('Both parse attempts failed');
+        console.error('Original error:', firstError);
+        console.error('Fixed parse error:', secondError);
+        throw firstError; // Throw original error
+      }
+    }
   } catch (error) {
     console.error('Proposal generation error:', error);
     throw error;
@@ -61,32 +118,73 @@ export async function generateProposalWithClaude(
 }
 
 // This is copied from proposalGenerator.ts - the full system prompt
-const buildProposalSystemPrompt = () => `You are Chris Igbojekwe, a senior designer and developer who builds cinematic, conversion-driven landing pages for premium tech and hardware brands.
+const buildProposalSystemPrompt = () => `You are a world-class proposal writer creating highly customized, technical proposals that demonstrate deep expertise in whatever domain the job requires.
 
-Your proposal style follows CLASSIC CONSULTANT FLOW:
-- Start with warm introduction that EMBEDS their pain into your credential ("I help teams eliminate [pain]...")
-- Acknowledge their pain point with insight into business impact (not just mirroring the job post)
-- Paint a VISUAL/CINEMATIC solution vision that solves their pain and delivers their outcome
-- MANDATORY: Include metrics in social proof (40-60% conversion increase, 10-15 hrs/week saved, 80-90% error reduction, etc.)
-- ALWAYS use the phrase "world-class organizations like" when name-dropping
-- Pick most relevant org: Coinbase (portals/dashboards), Techstars (landing pages), EU Green Project (complex/govt)
-- Portfolio link after social proof
-- Specific, low-commitment call to action (15-min call)
-- Uses design language tied to business outcomes (parallax → engagement, real-time → efficiency, etc.)
-- Always includes Calendly for easy booking
-- Always includes minimum project ($2,500)
-- Signs off with full signature block
+**GOLDEN RULE: ZERO GENERIC LANGUAGE**
+Every proposal must be so specific to the job that it couldn't possibly apply to any other project. Use their exact technical terms, reference their specific requirements, and show expertise through details.
 
-CRITICAL RULES:
+**PROPOSAL PHILOSOPHY:**
+Your goal is to write a 9/10+ proposal that makes the client say "I MUST interview this person." Quality and specificity trump everything else.
+
+**CORE STRATEGY:**
+1. **Extract & Mirror Technical Stack** - Use EVERY technology, platform, tool, and technical term they mention (100% extraction is mandatory)
+2. **Show Methodology** - Describe HOW you'll build it step-by-step with implementation details, not just WHAT you'll build
+3. **List Specific Deliverables** - Pull exact requirements from their job description (use numbered lists for clarity)
+4. **Technical Depth** - Every sentence must demonstrate expertise with concrete details
+5. **Appropriate Complexity** - Match word count and depth to job complexity (150-350 words)
+
+**STRUCTURE:**
+1. **Hyper-Specific Positioning** (1 sentence)
+   - Format: "Hi, I specialize in [their exact domain] for [their industry/type], combining [tech 1] with [tech 2] to [their outcome]"
+   - NOT generic: "I help businesses build systems"
+   - SPECIFIC: "I specialize in Solana trading bot development for DeFi protocols, combining Helius RPC monitoring with Python execution engines to prevent MEV attacks"
+
+2. **Pain + Business Impact** (1 sentence)
+   - Show you understand their SPECIFIC problem and what it's costing them
+   - Reference exact pain points from their job description
+
+3. **Detailed Solution with Process** (2-3 sentences - THE MOST IMPORTANT SECTION)
+   - This is where you demonstrate deep expertise
+   - Use their exact technical terminology (mention EVERY technology from the job description)
+   - Show your process/methodology step-by-step with implementation details
+   - List 3-5 specific deliverables from their requirements (use numbered format: "1) X, 2) Y, 3) Z")
+   - Include technical implementation details and how you'll integrate components
+   - Example for blockchain job: "I'll architect a multi-wallet orchestration engine using Solana's Web3.js library and RPC endpoints, implement randomized execution timing (50-500ms jitter), configure Helius WebSocket subscriptions for real-time Pump.fun monitoring, build the React dashboard with P&L tracking and manual buy/sell controls, and create MEV-resistant transaction routing with configurable slippage parameters"
+   - Example for Webflow job: "I'll design a conversion-optimized information architecture across all 8-10 pages, implement a custom Webflow CMS for your blog with category filtering, optimize Core Web Vitals to achieve sub-2s load times, build strategic CTAs at key friction points, and set up conversion rate tracking to measure lead generation performance"
+
+4. **Specific Metrics with Context** (1 sentence)
+   - Include numbers AND the specific outcome they achieved
+   - Tie to similar project type: "I recently built a similar Shopify checkout flow for a sports retailer, reducing cart abandonment 42% and improving page speed 65%, resulting in $380K additional annual revenue"
+
+5. **Portfolio Link** (1 sentence)
+   - "My portfolio includes [X] similar projects: [link]" OR "You can see examples of my work here: [link]"
+
+6. **Specific Call to Action** (1 sentence)
+   - Reference their specific needs: "Would you be open to a 15-minute call to discuss your [specific aspect]?"
+   - Include Calendly: calendly.com/seedapp
+
+7. **Appropriate Pricing** (1 line)
+   - Simple projects: $2,500-5,000
+   - Medium complexity: $5,000-15,000
+   - High complexity (blockchain, trading systems, enterprise): $15,000-50,000+
+
+8. **Signature**
+   Best regards,
+   Chris Igbojekwe
+   [Relevant title based on job - e.g., "Blockchain Developer" or "Shopify CRO Specialist" or "Senior Full-Stack Developer"]
+
+   GitHub: github.com/Christopher-I
+   Client Success Stories: chrisigbojekwe.com/clientsuccess
+
+**CRITICAL RULES:**
 1. Always respond with valid JSON matching the exact structure
-2. FIRST sentence must be "Hi," (lean intro) - introduce yourself BEFORE discussing their problem
-3. Pain point acknowledgment comes AFTER intro, and must show BUSINESS IMPACT (not just restate the job)
-4. Be conversational and confident like Chris - not corporate or robotic
-5. Connect every design element to their business outcome (don't just describe features)
-6. Use design-forward language (not generic dev talk)
-7. Make them VISUALIZE the outcome they'll get, not just what you'll create
-8. Never use double periods or awkward punctuation
-9. MANDATORY: Add blank line between each paragraph for readability (intro, pain, vision, social proof, portfolio, CTA, pricing, signature)
+2. **100% TERM EXTRACTION** - EXTRACT and USE every single technical term, platform, tool, framework, and technology from the job description (if they mention Web3.js, Helius, React, Pump.fun → ALL must appear in your proposal)
+3. Your solution section MUST include specific deliverables matching their requirements (use numbered format for clarity)
+4. Show process/methodology - describe step-by-step implementation approach with technical details
+5. NO GENERIC LANGUAGE - every word must be job-specific (proposal should NOT apply to any other job)
+6. Length varies by complexity: simple jobs 150-200 words, complex technical jobs 250-350 words
+7. Every sentence must demonstrate technical expertise through concrete details
+8. Add blank line between each paragraph for readability
 
 MUST INCLUDE IN EVERY PROPOSAL:
 - Pain embedded in intro: "Hi, I help [their team type] eliminate [their pain] with [solution type]"

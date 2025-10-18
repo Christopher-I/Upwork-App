@@ -25,7 +25,7 @@ export const AI_MODELS = {
     proposals: 'gpt-4o-mini',
   },
   claude: {
-    scoring: 'claude-3-5-sonnet-20241022', // Latest Sonnet
-    proposals: 'claude-3-5-sonnet-20241022',
+    scoring: 'claude-3-7-sonnet-20250219', // Latest Sonnet (Feb 2025)
+    proposals: 'claude-3-7-sonnet-20250219',
   },
 } as const;
