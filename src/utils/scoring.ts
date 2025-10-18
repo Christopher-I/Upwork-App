@@ -1,6 +1,8 @@
 import { Job, ScoreBreakdown } from '../types/job';
 import { Settings } from '../types/settings';
 import { scoreJobWithChatGPT } from '../lib/openai';
+import { scoreJobWithClaude } from '../lib/claude';
+import { AI_PROVIDER } from '../config/ai';
 
 /**
  * Calculate complete job score (0-100 points)
@@ -16,17 +18,29 @@ export async function calculateJobScore(
   // Try to get AI scores for 3 dimensions if enabled
   if (useAI) {
     try {
-      aiScores = await scoreJobWithChatGPT(
-        job.title || '',
-        job.description || '',
-        job.budget || 0,
-        job.budgetType || 'negotiable',
-        job.hourlyBudgetMin,
-        job.hourlyBudgetMax
-      );
-      console.log('✅ ChatGPT scoring successful');
+      if (AI_PROVIDER === 'claude') {
+        aiScores = await scoreJobWithClaude(
+          job.title || '',
+          job.description || '',
+          job.budget || 0,
+          job.budgetType || 'negotiable',
+          job.hourlyBudgetMin,
+          job.hourlyBudgetMax
+        );
+        console.log('✅ Claude scoring successful');
+      } else {
+        aiScores = await scoreJobWithChatGPT(
+          job.title || '',
+          job.description || '',
+          job.budget || 0,
+          job.budgetType || 'negotiable',
+          job.hourlyBudgetMin,
+          job.hourlyBudgetMax
+        );
+        console.log('✅ ChatGPT scoring successful');
+      }
     } catch (error) {
-      console.warn('⚠️ ChatGPT scoring failed, using rule-based fallback:', error);
+      console.warn(`⚠️ ${AI_PROVIDER === 'claude' ? 'Claude' : 'ChatGPT'} scoring failed, using rule-based fallback:`, error);
     }
   }
 

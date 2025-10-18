@@ -3,6 +3,8 @@ import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Job } from '../types/job';
 import { generateProposal } from '../lib/proposalGenerator';
+import { generateProposalWithClaude } from '../lib/proposalGeneratorClaude';
+import { AI_PROVIDER } from '../config/ai';
 import { useSettings } from '../hooks/useSettings';
 
 interface JobDetailModalProps {
@@ -54,7 +56,9 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
     setIsGenerating(true);
 
     try {
-      const proposal = await generateProposal(currentJob, settings);
+      const proposal = AI_PROVIDER === 'claude'
+        ? await generateProposalWithClaude(currentJob, settings)
+        : await generateProposal(currentJob, settings);
 
       await updateDoc(doc(db, 'jobs', currentJob.id), {
         proposal: {

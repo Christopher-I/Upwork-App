@@ -10,6 +10,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.67.0",
     "@tanstack/react-query": "^5.12.2",
     "firebase": "^10.7.1",
     "graphql": "^16.11.0",

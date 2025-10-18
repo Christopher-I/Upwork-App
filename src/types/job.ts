@@ -84,6 +84,16 @@ export interface Job {
   detectedRedFlags?: string[];
   isTechnicalOnly?: boolean;
 
+  // Skills match
+  skillsMatch?: {
+    score: number;
+    detectedPlatforms: string[];
+    matchedSkills: string[];
+    mismatchedSkills: string[];
+    isPrimaryMismatch: boolean;
+    reasoning: string;
+  };
+
   // AI proposal
   proposal?: {
     template: 'range-first' | 'no-price-first' | 'audit-first';

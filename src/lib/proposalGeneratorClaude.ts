@@ -1,14 +1,14 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { Job } from '../types/job';
 import { Settings } from '../types/settings';
 
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
   dangerouslyAllowBrowser: true, // Only for development/testing
 });
 
 interface ProposalResult {
-  template: 'range-first' | 'no-price-first' | 'audit-first';
+  template: 'range-first' | 'no-price-first' | 'audit-first' | 'platform-mismatch';
   content: string;
   quickWins: string[];
   packageRecommended: string;
@@ -16,32 +16,43 @@ interface ProposalResult {
 }
 
 /**
- * Generate a customized proposal for a job using ChatGPT
+ * Generate a customized proposal for a job using Claude
  */
-export async function generateProposal(
+export async function generateProposalWithClaude(
   job: Job,
   settings: Settings
 ): Promise<ProposalResult> {
-  const prompt = buildProposalPrompt(job, settings);
+  const systemPrompt = buildProposalSystemPrompt();
+  const userPrompt = buildProposalPrompt(job, settings);
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // Fast and cost-effective
+    const message = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022', // Latest Sonnet model
+      max_tokens: 2048,
+      temperature: 0.7, // Higher temperature for creative proposals
+      system: systemPrompt,
       messages: [
         {
-          role: 'system',
-          content: PROPOSAL_SYSTEM_PROMPT,
-        },
-        {
           role: 'user',
-          content: prompt,
+          content: userPrompt,
         },
       ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7, // Higher temperature for more creative proposals
     });
 
-    const result = JSON.parse(completion.choices[0].message.content || '{}');
+    // Extract text from Claude's response
+    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+
+    // Claude should return JSON wrapped in <response> tags or plain JSON
+    let jsonText = responseText;
+
+    // Try to extract JSON from <response> tags if present
+    const responseMatch = responseText.match(/<response>([\s\S]*?)<\/response>/);
+    if (responseMatch) {
+      jsonText = responseMatch[1].trim();
+    }
+
+    // Parse JSON
+    const result = JSON.parse(jsonText);
     return result as ProposalResult;
   } catch (error) {
     console.error('Proposal generation error:', error);
@@ -49,7 +60,8 @@ export async function generateProposal(
   }
 }
 
-const PROPOSAL_SYSTEM_PROMPT = `You are Chris Igbojekwe, a senior designer and developer who builds cinematic, conversion-driven landing pages for premium tech and hardware brands.
+// This is copied from proposalGenerator.ts - the full system prompt
+const buildProposalSystemPrompt = () => `You are Chris Igbojekwe, a senior designer and developer who builds cinematic, conversion-driven landing pages for premium tech and hardware brands.
 
 Your proposal style follows CLASSIC CONSULTANT FLOW:
 - Start with warm introduction that EMBEDS their pain into your credential ("I help teams eliminate [pain]...")
@@ -95,6 +107,7 @@ OUTPUT FORMAT:
   "priceRange": "$X,XXX - $X,XXX" or "Let's discuss" or "N/A"
 }`;
 
+// This is copied from proposalGenerator.ts - builds the full prompt
 function buildProposalPrompt(job: Job, settings: Settings): string {
   // Determine best template based on job characteristics
   let templateGuidance = '';
