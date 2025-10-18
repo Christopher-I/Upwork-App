@@ -87,11 +87,11 @@ MUST INCLUDE IN EVERY PROPOSAL:
 
 OUTPUT FORMAT:
 {
-  "template": "range-first" | "no-price-first" | "audit-first",
-  "content": "Full proposal text (250-350 words)",
+  "template": "range-first" | "no-price-first" | "audit-first" | "platform-mismatch",
+  "content": "Full proposal text (250-350 words) OR polite decline message for platform-specific jobs",
   "quickWins": ["Specific visual/UX improvement 1", "Specific visual/UX improvement 2", "Specific visual/UX improvement 3"],
-  "packageRecommended": "Launch" | "Growth" | "Portal Lite" | "Custom",
-  "priceRange": "$X,XXX - $X,XXX" or "Let's discuss"
+  "packageRecommended": "Launch" | "Growth" | "Portal Lite" | "Custom" | "Not a fit",
+  "priceRange": "$X,XXX - $X,XXX" or "Let's discuss" or "N/A"
 }`;
 
 function buildProposalPrompt(job: Job, settings: Settings): string {
@@ -147,6 +147,15 @@ ${job.detectedOutcomes?.join(', ') || 'None detected'}
 - Technical signals: ${job.jobClarity?.technicalMatches || 0}
 - Clarity signals: ${job.jobClarity?.clarityMatches || 0}
 
+**PLATFORM/TECHNOLOGY REQUIREMENTS:**
+Scan the job title and description for specific platform requirements like:
+- GoHighLevel / GHL
+- Bubble.io
+- Salesforce (admin/automation work)
+- HubSpot (operations/automation work)
+- Other no-code automation platforms
+If ANY of these are PRIMARY requirements (mentioned in title, requirements section, or 3+ times), flag this as a PLATFORM-SPECIFIC job.
+
 **ESTIMATED PROJECT:**
 - Hours: ${job.estimatedHours}
 - Price: $${estimatedPrice.toLocaleString()}
@@ -161,6 +170,23 @@ ${templateGuidance}
 ${pricingGuidance}
 
 **PROPOSAL STRUCTURE (FOLLOW EXACTLY - CLASSIC CONSULTANT FLOW):**
+
+**CRITICAL: Platform-Specific Job Detection**
+BEFORE writing the proposal, check if this is a PLATFORM-SPECIFIC job (requires GHL, Bubble, Salesforce, etc.):
+
+**IF PLATFORM-SPECIFIC JOB DETECTED:**
+- DO NOT generate a generic proposal pretending you have that platform expertise
+- Instead, acknowledge the platform requirement honestly
+- Politely decline OR offer an alternative approach if applicable
+- Example response: "I noticed you're specifically looking for a GoHighLevel expert. While I specialize in building custom web applications and automation systems using modern frameworks (React, Node.js, APIs), I don't have deep GHL-specific experience. If you're open to exploring a custom-built solution instead of GHL, I'd be happy to discuss. Otherwise, I wish you the best in finding the right GHL specialist for your needs."
+- Set packageRecommended: "Not a fit"
+- Set priceRange: "N/A"
+- This shows integrity and saves everyone time
+
+**IF NOT PLATFORM-SPECIFIC (standard web dev/design job):**
+Proceed with the normal proposal structure below.
+
+---
 
 **FORMATTING RULE: Add a blank line between EVERY section below for readability.**
 

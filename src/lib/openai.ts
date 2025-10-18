@@ -26,10 +26,18 @@ export interface ChatGPTScoringResult {
     isTechnicalOnly: boolean;
     reasoning: string;
   };
+  skillsMatch: {
+    score: number;
+    detectedPlatforms: string[];
+    matchedSkills: string[];
+    mismatchedSkills: string[];
+    isPrimaryMismatch: boolean;
+    reasoning: string;
+  };
 }
 
 /**
- * Use ChatGPT to score 3 dimensions: EHR Potential, Job Clarity, Business Impact
+ * Use ChatGPT to score 4 dimensions: EHR Potential, Job Clarity, Business Impact, Skills Match
  * Uses structured JSON output for reliability
  */
 export async function scoreJobWithChatGPT(
@@ -38,9 +46,10 @@ export async function scoreJobWithChatGPT(
   budget: number,
   budgetType: 'fixed' | 'hourly' | 'negotiable',
   hourlyBudgetMin?: number,
-  hourlyBudgetMax?: number
+  hourlyBudgetMax?: number,
+  userSkills?: { coreSkills: string[]; flaggedPlatforms: string[] }
 ): Promise<ChatGPTScoringResult> {
-  const prompt = buildScoringPrompt(jobTitle, jobDescription, budget, budgetType, hourlyBudgetMin, hourlyBudgetMax);
+  const prompt = buildScoringPrompt(jobTitle, jobDescription, budget, budgetType, hourlyBudgetMin, hourlyBudgetMax, userSkills);
 
   try {
     const completion = await openai.chat.completions.create({
@@ -68,7 +77,7 @@ export async function scoreJobWithChatGPT(
 }
 
 // System prompt that defines the AI's role and constraints
-const SYSTEM_PROMPT = `You are an expert Upwork job evaluator specializing in web development projects. Your role is to analyze job postings and provide objective, numerical scores for 3 specific dimensions.
+const SYSTEM_PROMPT = `You are an expert Upwork job evaluator specializing in web development projects. Your role is to analyze job postings and provide objective, numerical scores for 4 specific dimensions.
 
 **CRITICAL RULES:**
 1. Always respond with valid JSON matching the exact structure provided
@@ -105,6 +114,14 @@ Always return valid JSON with this exact structure:
     "detectedOutcomes": ["array", "of", "strings"],
     "isTechnicalOnly": boolean,
     "reasoning": "string"
+  },
+  "skillsMatch": {
+    "score": 0-15,
+    "detectedPlatforms": ["array", "of", "platform", "names"],
+    "matchedSkills": ["array", "of", "matched", "skills"],
+    "mismatchedSkills": ["array", "of", "mismatched", "skills"],
+    "isPrimaryMismatch": boolean,
+    "reasoning": "string"
   }
 }`;
 
@@ -114,7 +131,8 @@ function buildScoringPrompt(
   budget: number,
   budgetType: string,
   hourlyBudgetMin?: number,
-  hourlyBudgetMax?: number
+  hourlyBudgetMax?: number,
+  userSkills?: { coreSkills: string[]; flaggedPlatforms: string[] }
 ): string {
   // Format budget string based on type and range
   let budgetString = 'Not specified (open/negotiable)';
