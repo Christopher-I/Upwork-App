@@ -7,6 +7,7 @@ import { AddMockDataButton } from './AddMockDataButton';
 import { SettingsPanel } from './SettingsPanel';
 import { JobFilters, FilterOptions } from './JobFilters';
 import { Job } from '../types/job';
+import { filterAndSortJobs } from '../utils/jobFilters';
 
 type TabType = 'recommended' | 'applied' | 'all';
 
@@ -146,151 +147,10 @@ export function Dashboard() {
   const { jobs: rawJobs, loading } = useJobs(activeTab);
   const counts = useJobCounts(filters.clientCountry);
 
-  // Apply filters and sorting
+  // Apply filters and sorting (delegated to utility function)
   const jobs = useMemo(() => {
-    let filtered = [...rawJobs];
-
-    // Apply country filter (applies to all tabs)
-    if (filters.clientCountry === 'us_only') {
-      filtered = filtered.filter((job) => {
-        const location = job.client?.location;
-        // Handle both string format and object format
-        const country = typeof location === 'string' ? location : (location as any)?.country;
-        return country === 'United States' || country === 'US' || country === 'USA';
-      });
-    }
-
-    // ALWAYS exclude hired jobs (applies to all tabs)
-    filtered = filtered.filter((job) => {
-      // If job has hiring info, check if positions are still available
-      if (job.freelancersToHire !== undefined && job.totalFreelancersToHire !== undefined) {
-        const freelancersToHire = job.freelancersToHire || 0;
-        const totalFreelancersToHire = job.totalFreelancersToHire || 1;
-
-        // If all positions filled (freelancersToHire = 0 and totalFreelancersToHire > 0), exclude
-        if (totalFreelancersToHire > 0 && freelancersToHire === 0) {
-          return false;
-        }
-      }
-      return true;
-    });
-
-    // Apply all filters to all tabs (each tab has independent filters)
-    // Budget type filter
-    if (filters.budgetType !== 'all') {
-      if (filters.budgetType === 'open') {
-        // Open budget means no price set (budget = 0 or budgetIsPlaceholder = true)
-        filtered = filtered.filter(
-          (job) => job.budget === 0 || job.budgetIsPlaceholder === true
-        );
-      } else {
-        filtered = filtered.filter((job) => job.budgetType === filters.budgetType);
-      }
-    }
-
-    // Budget range filter
-    if (filters.minBudget > 0) {
-      filtered = filtered.filter((job) => job.budget >= filters.minBudget);
-    }
-    if (filters.maxBudget > 0) {
-      filtered = filtered.filter((job) => job.budget <= filters.maxBudget);
-    }
-
-    // Proposals range filter
-    if (filters.minProposals > 0) {
-      filtered = filtered.filter(
-        (job) => job.proposalsCount >= filters.minProposals
-      );
-    }
-    if (filters.maxProposals > 0) {
-      filtered = filtered.filter(
-        (job) => job.proposalsCount <= filters.maxProposals
-      );
-    }
-
-    // Fair Market Value range filter
-    if (filters.minMarketRate > 0) {
-      filtered = filtered.filter(
-        (job) => (job.estimatedPrice || 0) >= filters.minMarketRate
-      );
-    }
-    if (filters.maxMarketRate > 0) {
-      filtered = filtered.filter(
-        (job) => (job.estimatedPrice || 0) <= filters.maxMarketRate
-      );
-    }
-
-    // Team language filter
-    if (filters.teamLanguage === 'team') {
-      filtered = filtered.filter(
-        (job) =>
-          job.languageAnalysis &&
-          (job.languageAnalysis.weCount > 0 ||
-            job.languageAnalysis.ourCount > 0 ||
-            job.languageAnalysis.teamMentions > 0)
-      );
-    } else if (filters.teamLanguage === 'solo') {
-      filtered = filtered.filter(
-        (job) =>
-          job.languageAnalysis &&
-          (job.languageAnalysis.iCount > 0 ||
-            job.languageAnalysis.myCount > 0 ||
-            job.languageAnalysis.meMentions > 0)
-      );
-    }
-
-    // Experience level filter
-    if (filters.experienceLevel !== 'all') {
-      filtered = filtered.filter(
-        (job) => job.experienceLevel === filters.experienceLevel
-      );
-    }
-
-    // Payment verified filter
-    if (filters.paymentVerified === 'yes') {
-      filtered = filtered.filter((job) => job.client.paymentVerified);
-    } else if (filters.paymentVerified === 'no') {
-      filtered = filtered.filter((job) => !job.client.paymentVerified);
-    }
-
-    // Tag filter - only show jobs that have ALL selected tags
-    if (filters.selectedTags && filters.selectedTags.length > 0) {
-      filtered = filtered.filter((job) => {
-        if (!job.tags || job.tags.length === 0) return false;
-        return filters.selectedTags!.every((selectedTag) =>
-          job.tags!.includes(selectedTag)
-        );
-      });
-    }
-
-    // Sorting
-    switch (filters.sortBy) {
-      case 'price_low':
-        filtered.sort((a, b) => a.budget - b.budget);
-        break;
-      case 'price_high':
-        filtered.sort((a, b) => b.budget - a.budget);
-        break;
-      case 'score_high':
-        filtered.sort((a, b) => b.score - a.score);
-        break;
-      case 'market_rate_high':
-        filtered.sort((a, b) => (b.estimatedPrice || 0) - (a.estimatedPrice || 0));
-        break;
-      case 'proposals_low':
-        filtered.sort((a, b) => a.proposalsCount - b.proposalsCount);
-        break;
-      case 'newest':
-      default:
-        filtered.sort(
-          (a, b) =>
-            new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
-        );
-        break;
-    }
-
-    return filtered;
-  }, [rawJobs, filters, activeTab]);
+    return filterAndSortJobs(rawJobs, filters);
+  }, [rawJobs, filters]);
 
   // Wrapper to handle full settings save
   const handleSaveSettings = async (newSettings: any) => {
