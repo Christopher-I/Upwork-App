@@ -660,20 +660,6 @@ export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) 
 
           {/* Actions */}
           <div className="border-t border-gray-200 pt-6 flex gap-3 flex-wrap">
-            {/* Toggle Recommendation Button */}
-            <button
-              onClick={handleToggleRecommendation}
-              className={`px-3 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm transition-colors ${
-                currentJob.finalClassification === 'recommended'
-                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                  : 'bg-primary-600 text-white hover:bg-primary-700'
-              }`}
-            >
-              {currentJob.finalClassification === 'recommended'
-                ? 'Remove from Recommended'
-                : 'Add to Recommended'}
-            </button>
-
             {!currentJob.applied && (
               <button
                 onClick={handleMarkAsApplied}
@@ -690,6 +676,21 @@ export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) 
                 Mark as Won
               </button>
             )}
+
+            {/* Toggle Recommendation Button */}
+            <button
+              onClick={handleToggleRecommendation}
+              className={`px-3 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                currentJob.finalClassification === 'recommended'
+                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                  : 'bg-primary-600 text-white hover:bg-primary-700'
+              }`}
+            >
+              {currentJob.finalClassification === 'recommended'
+                ? 'Remove from Recommended'
+                : 'Add to Recommended'}
+            </button>
+
             <button
               onClick={onClose}
               className="px-3 py-2 sm:px-5 sm:py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200"
