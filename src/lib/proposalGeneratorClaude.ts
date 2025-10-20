@@ -79,6 +79,10 @@ export async function generateProposalWithClaude(
       // First attempt: try parsing as-is
       const result = JSON.parse(jsonText);
       console.log('✅ Parsed successfully without cleaning');
+
+      // Force portfolio link to paragraph 2
+      result.content = movePortfolioToSecondParagraph(result.content);
+
       return result as ProposalResult;
     } catch (firstError) {
       console.log('First parse failed, attempting to fix newlines in strings...');
@@ -103,6 +107,10 @@ export async function generateProposalWithClaude(
         console.log('Fixed JSON (first 200 chars):', fixedJson.substring(0, 200));
         const result = JSON.parse(fixedJson);
         console.log('✅ Parsed successfully after fixing newlines');
+
+        // Force portfolio link to paragraph 2
+        result.content = movePortfolioToSecondParagraph(result.content);
+
         return result as ProposalResult;
       } catch (secondError) {
         console.error('Both parse attempts failed');
@@ -115,6 +123,30 @@ export async function generateProposalWithClaude(
     console.error('Proposal generation error:', error);
     throw error;
   }
+}
+
+/**
+ * Force portfolio link to be the second paragraph
+ */
+function movePortfolioToSecondParagraph(content: string): string {
+  const portfolioLine = 'You can see examples of my work here: chrisigbojekwe.com';
+
+  // Split content into paragraphs
+  const paragraphs = content.split('\n\n').filter(p => p.trim());
+
+  // Find and remove portfolio line from wherever it is
+  const portfolioIndex = paragraphs.findIndex(p => p.includes(portfolioLine));
+  if (portfolioIndex !== -1) {
+    paragraphs.splice(portfolioIndex, 1);
+  }
+
+  // Insert portfolio as second paragraph (index 1)
+  if (paragraphs.length >= 1) {
+    paragraphs.splice(1, 0, portfolioLine);
+  }
+
+  // Rejoin paragraphs
+  return paragraphs.join('\n\n');
 }
 
 // This is copied from proposalGenerator.ts - the full system prompt
