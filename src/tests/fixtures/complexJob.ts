@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { generateProposalWithClaude } from '../lib/proposalGeneratorClaude';
-import { DEFAULT_SETTINGS } from '../types/settings';
+import { generateProposalWithClaude } from '../../lib/proposalGeneratorClaude';
+import { DEFAULT_SETTINGS } from '../../types/settings';
 
 /**
  * Test with a COMPLEX technical job (Blockchain/Solana)

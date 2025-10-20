@@ -1,7 +1,7 @@
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { calculateJobScore, applyHardFilters } from './scoring';
-import { DEFAULT_SETTINGS } from '../types/settings';
+import { db } from '../../lib/firebase';
+import { calculateJobScore, applyHardFilters } from '../../utils/scoring';
+import { DEFAULT_SETTINGS } from '../../types/settings';
 
 /**
  * Add mock jobs to Firestore for testing

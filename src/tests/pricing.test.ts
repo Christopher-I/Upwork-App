@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { calculateJobScore } from './scoring';
+import { calculateJobScore } from '../utils/scoring';
 import { DEFAULT_SETTINGS } from '../types/settings';
 
 /**

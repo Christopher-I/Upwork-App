@@ -1,4 +1,4 @@
-import { applyRecommendationFilters } from './recommendationFilters';
+import { applyRecommendationFilters } from '../utils/recommendationFilters';
 import { DEFAULT_SETTINGS } from '../types/settings';
 
 /**

@@ -1,5 +1,5 @@
-import { applyRecommendationFilters } from './recommendationFilters';
-import { DEFAULT_SETTINGS } from '../types/settings';
+import { applyRecommendationFilters } from '../../utils/recommendationFilters';
+import { DEFAULT_SETTINGS } from '../../types/settings';
 
 /**
  * Test the actual Clappia job from Upwork
