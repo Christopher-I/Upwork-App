@@ -133,22 +133,40 @@ Your goal is to write a 9/10+ proposal that makes the client say "I MUST intervi
 4. **Technical Depth** - Every sentence must demonstrate expertise with concrete details
 5. **Appropriate Complexity** - Match word count and depth to job complexity (150-350 words)
 
-**STRUCTURE:**
-1. **Hyper-Specific Positioning** (1 sentence)
+**STRUCTURE (EXACT ORDER - DO NOT DEVIATE):**
+
+**EXAMPLE SHOWING CORRECT PARAGRAPH ORDER:**
+```
+[Paragraph 1] Hi, I specialize in Webflow development for SaaS companies, combining conversion-focused design with Core Web Vitals optimization to turn visitors into qualified leads.
+
+[Paragraph 2] You can see examples of my work here: chrisigbojekwe.com
+
+[Paragraph 3] I understand your challenge—you need a high-converting marketing site that loads fast and generates qualified demo requests.
+
+[Paragraph 4] For your SaaS platform, I'll build: 1) 8-10 Webflow pages with conversion-optimized layouts, 2) blog with CMS and SEO optimization, 3) Core Web Vitals optimization (sub-2s loads), 4) lead capture forms with validation, and 5) analytics integration.
+
+[Paragraph 5] I've worked with Techstars. Recently, I helped a SaaS client increase qualified leads by 52% and improve page speed by 67%.
+
+[Paragraph 6] Would you be open to a 15-minute call to discuss your conversion goals? calendly.com/seedapp
+
+[Paragraph 7] Project range: $4,500-$6,000
+
+[Paragraph 8] Best regards, Chris Igbojekwe...
+```
+
+**NOW FOLLOW THIS STRUCTURE EXACTLY:**
+
+1. **Hyper-Specific Positioning** (PARAGRAPH 1)
    - Format: "Hi, I specialize in [their exact domain] for [their industry/type], combining [tech 1] with [tech 2] to [their outcome]"
    - NOT generic: "I help businesses build systems"
    - SPECIFIC: "I specialize in Solana trading bot development for DeFi protocols, combining Helius RPC monitoring with Python execution engines to prevent MEV attacks"
 
-2. **Portfolio Link** (1 sentence - THIS MUST BE PARAGRAPH 2!!!)
+2. **Portfolio Link** (PARAGRAPH 2 - MANDATORY POSITION)
    - Format: "You can see examples of my work here: chrisigbojekwe.com"
-   - ❌ DO NOT put this later in the proposal
-   - ❌ DO NOT combine with other paragraphs
-   - ✅ MUST be standalone paragraph #2, immediately following paragraph 1
-   - ✅ Must come BEFORE pain/impact paragraph
-   - ✅ Must come BEFORE solution paragraph
-   - ✅ Must come BEFORE social proof paragraph
+   - THIS MUST BE THE SECOND PARAGRAPH IN YOUR OUTPUT
+   - NO EXCEPTIONS - ALWAYS PARAGRAPH 2
 
-3. **Pain + Business Impact** (1 sentence - THIS IS PARAGRAPH 3)
+3. **Pain + Business Impact** (PARAGRAPH 3)
    - Show you understand their SPECIFIC problem and what it's costing them
    - Reference exact pain points from their job description
 
@@ -205,12 +223,14 @@ Your goal is to write a 9/10+ proposal that makes the client say "I MUST intervi
 7. Every sentence must demonstrate technical expertise through concrete details
 8. Add blank line between each paragraph for readability
 
-MUST INCLUDE IN EVERY PROPOSAL (IN THIS EXACT ORDER):
-- **Paragraph 1**: Pain embedded in intro: "Hi, I help [their team type] eliminate [their pain] with [solution type]"
-- **Paragraph 2**: Portfolio link IMMEDIATELY after paragraph 1: "You can see examples of my work here: chrisigbojekwe.com" ← THIS MUST BE PARAGRAPH 2!
-- **Paragraph 3**: Pain + Business Impact
-- **Paragraph 4**: Solution with numbered deliverables "1) X, 2) Y, 3) Z"
-- **Paragraph 5**: Social proof (2 SEPARATE sentences)
+MUST INCLUDE IN EVERY PROPOSAL (IN THIS EXACT ORDER - STRICT ENFORCEMENT):
+
+OUTPUT PARAGRAPH ORDER (NO DEVIATIONS ALLOWED):
+[Para 1] Positioning intro
+[Para 2] "You can see examples of my work here: chrisigbojekwe.com" ← MUST BE HERE
+[Para 3] Pain + Business Impact
+[Para 4] Solution with deliverables
+[Para 5] Social proof (2 SEPARATE sentences)
   - Sentence 1 (optional): Name-drop 1-2 relevant companies (Coinbase/Techstars/EU Green Project) ONLY if relevant. Format: "I've worked with [Company]." NO metrics in this sentence!
   - Sentence 2 (required): "Recently, I helped a [industry] client [achieve results with irregular numbers 52%, 38%, 67%]." NO company names in this sentence!
   - ❌ NEVER say "world-class organizations like"
