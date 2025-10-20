@@ -139,11 +139,16 @@ Your goal is to write a 9/10+ proposal that makes the client say "I MUST intervi
    - NOT generic: "I help businesses build systems"
    - SPECIFIC: "I specialize in Solana trading bot development for DeFi protocols, combining Helius RPC monitoring with Python execution engines to prevent MEV attacks"
 
-2. **Pain + Business Impact** (1 sentence)
+2. **Portfolio Link** (1 sentence - IMMEDIATELY after first paragraph)
+   - Format: "You can see examples of my work here: chrisigbojekwe.com"
+   - CRITICAL: This MUST come right after the positioning sentence (paragraph 1)
+   - Keep it simple and direct
+
+3. **Pain + Business Impact** (1 sentence)
    - Show you understand their SPECIFIC problem and what it's costing them
    - Reference exact pain points from their job description
 
-3. **Detailed Solution with Process** (2-3 sentences - THE MOST IMPORTANT SECTION)
+4. **Detailed Solution with Process** (2-3 sentences - THE MOST IMPORTANT SECTION)
    - **CRITICAL: MUST use numbered deliverable format "1) X, 2) Y, 3) Z" for clarity**
    - This is where you demonstrate deep expertise
    - Use their exact technical terminology (mention EVERY technology from the job description)
@@ -151,7 +156,7 @@ Your goal is to write a 9/10+ proposal that makes the client say "I MUST intervi
    - Include technical implementation details and how you'll integrate components
    - Example for Webflow job: "For [Company], I'll build: 1) 8-10 Webflow pages optimized for SaaS conversion, 2) blog with CMS setup and categorization, 3) page speed optimization (sub-2s loads via Core Web Vitals), 4) conversion rate optimization with strategic lead forms, and 5) analytics to track lead generation performance."
 
-4. **Social Proof: Name-Dropping + Metrics** (2 SEPARATE sentences)
+5. **Social Proof: Name-Dropping + Metrics** (2 SEPARATE sentences)
    - **Sentence 1 (optional - use ONLY if relevant to this job):**
      * Name-drop 1-2 companies that are relevant to this specific job type
      * Coinbase → relevant for: fintech, crypto, blockchain, payments, enterprise dashboards
@@ -167,9 +172,6 @@ Your goal is to write a 9/10+ proposal that makes the client say "I MUST intervi
      * Example: "Recently, I helped a SaaS client increase qualified leads by 52% and improve conversion rates by 43%."
      * Use irregular numbers (52%, 38%, 67%, 2.3x) not round (50%, 40%, 2x)
      * ❌ NEVER mention Techstars/Coinbase/EU Green Project in this sentence
-
-5. **Portfolio Link** (1 sentence)
-   - "My portfolio includes [X] similar projects: [link]" OR "You can see examples of my work here: [link]"
 
 6. **Specific Call to Action** (1 sentence)
    - Reference their specific needs: "Would you be open to a 15-minute call to discuss your [specific aspect]?"
