@@ -64,6 +64,25 @@ export function JobCard({ job, onClick }: JobCardProps) {
         {job.description}
       </p>
 
+      {/* Tags - Show top 5 most important tags */}
+      {job.tags && job.tags.length > 0 && (
+        <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+          {job.tags.slice(0, 5).map((tag, index) => (
+            <span
+              key={index}
+              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-50 text-primary-700 border border-primary-200"
+            >
+              {tag}
+            </span>
+          ))}
+          {job.tags.length > 5 && (
+            <span className="text-xs text-gray-400">
+              +{job.tags.length - 5} more
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Professional signals - Show if has open budget AND team language AND $5k+ Fair Market Value */}
       {isProfessional && (
         <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">

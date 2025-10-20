@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { getAllTags } from '../utils/tagDetection';
 
 export interface FilterOptions {
   budgetType: 'all' | 'fixed' | 'hourly' | 'open';
@@ -13,6 +14,7 @@ export interface FilterOptions {
   paymentVerified: 'all' | 'yes' | 'no';
   clientCountry: 'us_only' | 'all';
   sortBy: 'newest' | 'price_low' | 'price_high' | 'score_high' | 'proposals_low' | 'market_rate_high';
+  selectedTags?: string[]; // Tags to filter by
 }
 
 interface JobFiltersProps {
@@ -22,12 +24,22 @@ interface JobFiltersProps {
 
 export function JobFilters({ filters, onFilterChange }: JobFiltersProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const allTags = useMemo(() => getAllTags(), []);
 
   const handleChange = (key: keyof FilterOptions, value: any) => {
     onFilterChange({
       ...filters,
       [key]: value,
     });
+  };
+
+  const toggleTag = (tag: string) => {
+    const selectedTags = filters.selectedTags || [];
+    const newSelectedTags = selectedTags.includes(tag)
+      ? selectedTags.filter(t => t !== tag)
+      : [...selectedTags, tag];
+
+    handleChange('selectedTags', newSelectedTags.length > 0 ? newSelectedTags : undefined);
   };
 
   return (
@@ -293,6 +305,40 @@ export function JobFilters({ filters, onFilterChange }: JobFiltersProps) {
             </div>
           </div>
 
+          {/* Tag Filter Section */}
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Filter by Tags
+            </label>
+            <div className="space-y-3">
+              {allTags.map((category) => (
+                <div key={category.category}>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    {category.category}
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {category.tags.map((tag) => {
+                      const isSelected = filters.selectedTags?.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            isSelected
+                              ? 'bg-primary-600 text-white border border-primary-600'
+                              : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Reset Button */}
           {getActiveFilterCount(filters) > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-100">
@@ -311,6 +357,7 @@ export function JobFilters({ filters, onFilterChange }: JobFiltersProps) {
                     paymentVerified: 'all',
                     clientCountry: 'us_only',
                     sortBy: 'score_high',
+                    selectedTags: undefined,
                   })
                 }
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium"
@@ -337,5 +384,6 @@ function getActiveFilterCount(filters: FilterOptions): number {
   if (filters.paymentVerified !== 'all') count++;
   // Don't count clientCountry as 'us_only' is the default
   if (filters.clientCountry !== 'us_only') count++;
+  if (filters.selectedTags && filters.selectedTags.length > 0) count += filters.selectedTags.length;
   return count;
 }

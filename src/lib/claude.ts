@@ -1,7 +1,15 @@
 import Anthropic from '@anthropic-ai/sdk';
 
+// Support both browser (Vite) and Node (testing) environments
+const getApiKey = () => {
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env.VITE_ANTHROPIC_API_KEY;
+  }
+  return process.env.VITE_ANTHROPIC_API_KEY;
+};
+
 const anthropic = new Anthropic({
-  apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
+  apiKey: getApiKey(),
   dangerouslyAllowBrowser: true, // Only for development/testing
 });
 

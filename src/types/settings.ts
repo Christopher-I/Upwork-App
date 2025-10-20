@@ -155,7 +155,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   minScore: 80,
-  minEHR: 70,
+  minEHR: 60,
 
   scoringWeights: {
     clientQuality: 25,
@@ -169,22 +169,22 @@ export const DEFAULT_SETTINGS: Settings = {
 
   pricingBands: {
     launch: {
-      min: 1800,
-      max: 2400,
-      hoursMin: 20,
-      hoursMax: 25,
-    },
-    growth: {
-      min: 3500,
-      max: 5000,
-      hoursMin: 35,
+      min: 2250,
+      max: 3750,
+      hoursMin: 30,
       hoursMax: 50,
     },
+    growth: {
+      min: 4500,
+      max: 7500,
+      hoursMin: 60,
+      hoursMax: 100,
+    },
     portalLite: {
-      min: 2500,
-      max: 4000,
-      hoursMin: 30,
-      hoursMax: 40,
+      min: 6000,
+      max: 12000,
+      hoursMin: 80,
+      hoursMax: 160,
     },
   },
 
@@ -193,7 +193,7 @@ export const DEFAULT_SETTINGS: Settings = {
     website: 'chrisigbojekwe.com',
     portfolio: 'dribbble.com/chris-i',
     github: 'github.com/Christopher-I',
-    bio: 'I specialize in Webflow sites, client portals, Shopify speed optimization, and simple automations with Zapier/Make/GHL.',
+    bio: 'I specialize in Webflow sites, client portals, page speed optimization, and simple automations with Zapier/Make.',
   },
 
   refreshSchedule: {

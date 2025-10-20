@@ -223,6 +223,16 @@ export function Dashboard() {
       filtered = filtered.filter((job) => !job.client.paymentVerified);
     }
 
+    // Tag filter - only show jobs that have ALL selected tags
+    if (filters.selectedTags && filters.selectedTags.length > 0) {
+      filtered = filtered.filter((job) => {
+        if (!job.tags || job.tags.length === 0) return false;
+        return filters.selectedTags!.every((selectedTag) =>
+          job.tags!.includes(selectedTag)
+        );
+      });
+    }
+
     // Sorting
     switch (filters.sortBy) {
       case 'price_low':
@@ -259,24 +269,25 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
         {/* Header */}
-        <header className="mb-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+        <header className="mb-4 sm:mb-6">
+          <div className="flex items-center justify-between">
+            <div className="hidden sm:block">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
                 Upwork Job Assistant
               </h1>
-              <p className="text-gray-500 mt-1 text-base">
+              <p className="text-gray-500 mt-1 text-sm sm:text-base">
                 AI-powered job recommendations with proposals ready to send
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2">
               <button
                 onClick={() => setShowSettings(true)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
               >
-                Settings
+                <span className="hidden sm:inline">Settings</span>
+                <span className="sm:hidden">⚙️</span>
               </button>
               <AddMockDataButton />
             </div>
@@ -284,28 +295,28 @@ export function Dashboard() {
         </header>
 
         {/* Stats - Simplified single line */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4 mb-6">
-          <div className="flex items-center gap-6">
-            <span className="text-gray-500 font-medium text-sm">Today:</span>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-900 text-2xl">{counts.recommended}</span>
-              <span className="text-gray-500 text-sm">recommended</span>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-4 sm:px-6 py-3 sm:py-4 mb-6">
+          <div className="flex items-center gap-2 sm:gap-4 md:gap-6 overflow-x-auto">
+            <span className="text-gray-500 font-medium text-xs sm:text-sm whitespace-nowrap">Today:</span>
+            <div className="flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+              <span className="font-bold text-gray-900 text-xl sm:text-2xl">{counts.recommended}</span>
+              <span className="text-gray-500 text-xs sm:text-sm">recommended</span>
             </div>
-            <span className="text-gray-300 text-lg">•</span>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-900 text-2xl">{counts.applied}</span>
-              <span className="text-gray-500 text-sm">applied</span>
+            <span className="text-gray-300 text-lg hidden sm:inline">•</span>
+            <div className="flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+              <span className="font-bold text-gray-900 text-xl sm:text-2xl">{counts.applied}</span>
+              <span className="text-gray-500 text-xs sm:text-sm">applied</span>
             </div>
-            <span className="text-gray-300 text-lg">•</span>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-900 text-2xl">{counts.total}</span>
-              <span className="text-gray-500 text-sm">total</span>
+            <span className="text-gray-300 text-lg hidden sm:inline">•</span>
+            <div className="flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+              <span className="font-bold text-gray-900 text-xl sm:text-2xl">{counts.total}</span>
+              <span className="text-gray-500 text-xs sm:text-sm">total</span>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-6 mb-6 border-b border-gray-200">
+        <div className="flex gap-4 sm:gap-6 md:gap-8 mb-6 border-b border-gray-200 overflow-x-auto">
           <TabButton
             active={activeTab === 'recommended'}
             onClick={() => handleTabChange('recommended')}
@@ -334,14 +345,14 @@ export function Dashboard() {
           <div className="bg-gradient-to-r from-success-50 to-success-100 border border-success-200 rounded-lg px-6 py-4 mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-success-700 font-medium mb-1">Total Pipeline Value</p>
-                <p className="text-3xl font-bold text-success-900">
+                <p className="text-xs sm:text-sm text-success-700 font-medium mb-1">Total Pipeline Value</p>
+                <p className="text-2xl sm:text-3xl font-bold text-success-900">
                   ${jobs.reduce((sum, job) => sum + (job.estimatedPrice || 0), 0).toLocaleString()}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-success-700 font-medium mb-1">Avg Fair Market Value</p>
-                <p className="text-2xl font-bold text-success-900">
+                <p className="text-xs sm:text-sm text-success-700 font-medium mb-1">Avg Fair Market Value</p>
+                <p className="text-xl sm:text-2xl font-bold text-success-900">
                   ${jobs.length > 0 ? Math.round(jobs.reduce((sum, job) => sum + (job.estimatedPrice || 0), 0) / jobs.length).toLocaleString() : 0}
                 </p>
               </div>

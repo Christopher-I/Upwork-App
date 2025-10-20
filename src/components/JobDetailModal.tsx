@@ -6,6 +6,7 @@ import { generateProposal } from '../lib/proposalGenerator';
 import { generateProposalWithClaude } from '../lib/proposalGeneratorClaude';
 import { AI_PROVIDER } from '../config/ai';
 import { useSettings } from '../hooks/useSettings';
+import { PricingRecommendation } from './PricingRecommendation';
 
 interface JobDetailModalProps {
   job: Job;
@@ -142,35 +143,36 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
     >
       <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-lg">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 z-10">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 sm:p-6 z-10">
+          <div className="flex items-start justify-between gap-2 sm:gap-4">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 leading-tight">
                 {job.title}
               </h2>
-              <div className="flex items-center gap-3 text-sm text-gray-500">
-                <span>Posted {getTimeAgo(job.postedAt)}</span>
+              <div className="hidden sm:flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-500 mt-2">
+                <span className="whitespace-nowrap">Posted {getTimeAgo(job.postedAt)}</span>
                 <span>•</span>
-                <span>{job.proposalsCount} proposals</span>
+                <span className="whitespace-nowrap">{job.proposalsCount} proposals</span>
                 <span>•</span>
-                <span>{job.client.location}</span>
+                <span className="whitespace-nowrap truncate">{job.client.location}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <a
                 href={currentJob.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors flex items-center gap-2"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-xs sm:text-sm transition-colors flex items-center gap-1 sm:gap-2 whitespace-nowrap"
               >
-                <span>View on Upwork</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span className="hidden sm:inline">View on Upwork</span>
+                <span className="sm:hidden">View</span>
+                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 text-3xl leading-none w-8 h-8 flex items-center justify-center"
+                className="text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl leading-none w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center flex-shrink-0"
                 aria-label="Close modal"
               >
                 ×
@@ -180,11 +182,14 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+          {/* Pricing Recommendation */}
+          <PricingRecommendation job={currentJob} />
+
           {/* Client Info */}
           <div className="bg-gray-100 rounded-lg p-4">
             <h3 className="font-semibold text-gray-900 mb-3 text-base">Client Info</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-gray-500">Company:</span>{' '}
                 <span className="font-medium text-gray-900">{job.client.name}</span>
@@ -378,7 +383,7 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
             <h3 className="font-semibold text-gray-900 mb-3 text-base">
               Job Description
             </h3>
-            <div className="bg-gray-100 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+            <div className="bg-gray-100 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed break-words overflow-x-auto">
               {job.description}
             </div>
           </div>
@@ -397,7 +402,7 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                 </p>
                 <button
                   onClick={handleGenerateProposal}
-                  className="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors"
+                  className="px-3 py-2 sm:px-5 sm:py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors"
                 >
                   Generate Proposal
                 </button>
@@ -463,20 +468,20 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                 <div className="flex gap-3 flex-wrap">
                   <button
                     onClick={copyProposal}
-                    className="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors"
+                    className="px-3 py-2 sm:px-5 sm:py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors"
                   >
                     Copy Proposal
                   </button>
                   <button
                     onClick={handleEditProposal}
-                    className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200"
+                    className="px-3 py-2 sm:px-5 sm:py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200"
                   >
                     Edit
                   </button>
                   <button
                     onClick={handleGenerateProposal}
                     disabled={isGenerating}
-                    className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200 disabled:opacity-50"
+                    className="px-3 py-2 sm:px-5 sm:py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200 disabled:opacity-50"
                   >
                     Regenerate
                   </button>
@@ -484,7 +489,7 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                     onClick={() =>
                       window.open(currentJob.url, '_blank', 'noopener,noreferrer')
                     }
-                    className="px-5 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
+                    className="px-3 py-2 sm:px-5 sm:py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
                   >
                     Open on Upwork
                   </button>
@@ -504,13 +509,13 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                 <div className="flex gap-3 mt-4">
                   <button
                     onClick={handleSaveEdit}
-                    className="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors"
+                    className="px-3 py-2 sm:px-5 sm:py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors"
                   >
                     Save Changes
                   </button>
                   <button
                     onClick={handleCancelEdit}
-                    className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200"
+                    className="px-3 py-2 sm:px-5 sm:py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200"
                   >
                     Cancel
                   </button>
@@ -524,7 +529,7 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
             {!currentJob.applied && (
               <button
                 onClick={handleMarkAsApplied}
-                className="px-5 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
+                className="px-3 py-2 sm:px-5 sm:py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
               >
                 Mark as Applied
               </button>
@@ -532,14 +537,14 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
             {currentJob.applied && !currentJob.won && (
               <button
                 onClick={handleMarkAsWon}
-                className="px-5 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
+                className="px-3 py-2 sm:px-5 sm:py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
               >
                 Mark as Won
               </button>
             )}
             <button
               onClick={onClose}
-              className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200"
+              className="px-3 py-2 sm:px-5 sm:py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200"
             >
               Close
             </button>

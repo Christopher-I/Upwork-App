@@ -84,6 +84,9 @@ export interface Job {
   detectedRedFlags?: string[];
   isTechnicalOnly?: boolean;
 
+  // Tags (categorization by platform, technology, service type)
+  tags?: string[];
+
   // Skills match
   skillsMatch?: {
     score: number;

@@ -53,12 +53,12 @@ function formatTimeDifference(date: Date): string {
 }
 
 /**
- * Calculate time until next refresh (6 hours after last fetch)
+ * Calculate time until next refresh (1 hour after last fetch)
  */
 function getTimeUntilRefresh(lastFetch: Date): { ready: boolean; message: string } {
   const now = new Date();
-  const sixHoursLater = new Date(lastFetch.getTime() + 6 * 60 * 60 * 1000);
-  const diffMs = sixHoursLater.getTime() - now.getTime();
+  const oneHourLater = new Date(lastFetch.getTime() + 1 * 60 * 60 * 1000);
+  const diffMs = oneHourLater.getTime() - now.getTime();
 
   if (diffMs <= 0) {
     return { ready: true, message: 'Ready to refresh' };
@@ -85,6 +85,8 @@ export function AddMockDataButton() {
   const [progress, setProgress] = useState(0);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [estimatedTimeLeft, setEstimatedTimeLeft] = useState<string | null>(null);
+  const [startTime, setStartTime] = useState<number | null>(null);
   const { settings } = useSettings();
 
   // Update current time every minute for live refresh countdown
@@ -135,6 +137,8 @@ export function AddMockDataButton() {
     setShowFetchModal(false);
     setLoading(true);
     setProgress(0);
+    setEstimatedTimeLeft(null);
+    setStartTime(Date.now());
 
     try {
       // Call Cloud Function to fetch jobs from Upwork
@@ -217,6 +221,25 @@ export function AddMockDataButton() {
           // Update progress after each job (whether success or error)
           const currentProgress = Math.round(((i + 1) / data.jobs.length) * 100);
           setProgress(currentProgress);
+
+          // Calculate estimated time remaining
+          if (startTime && currentProgress > 0 && currentProgress < 100) {
+            const elapsedMs = Date.now() - startTime;
+            const estimatedTotalMs = (elapsedMs / currentProgress) * 100;
+            const remainingMs = estimatedTotalMs - elapsedMs;
+
+            const remainingMinutes = Math.floor(remainingMs / (1000 * 60));
+            const remainingHours = Math.floor(remainingMinutes / 60);
+            const minutesLeft = remainingMinutes % 60;
+
+            if (remainingHours > 0) {
+              setEstimatedTimeLeft(`${remainingHours}h ${minutesLeft}m`);
+            } else if (minutesLeft > 0) {
+              setEstimatedTimeLeft(`${minutesLeft}m`);
+            } else {
+              setEstimatedTimeLeft('< 1m');
+            }
+          }
         }
       }
 
@@ -257,23 +280,24 @@ export function AddMockDataButton() {
 
   return (
     <>
-      <div className="flex gap-2">
+      <div className="flex gap-1 sm:gap-2">
         <button
           onClick={handleClearClick}
           disabled={clearing}
-          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+          className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-colors whitespace-nowrap ${
             clearing
               ? 'bg-gray-400 text-white cursor-not-allowed'
               : 'bg-danger-600 text-white hover:bg-danger-700 border border-danger-700'
           }`}
         >
-          {clearing ? 'Clearing...' : 'Clear All'}
+          <span className="hidden sm:inline">{clearing ? 'Clearing...' : 'Clear All'}</span>
+          <span className="sm:hidden">🗑️</span>
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={handleFetchClick}
             disabled={loading}
-            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-colors whitespace-nowrap ${
               success
                 ? 'bg-success-600 text-white'
                 : loading
@@ -281,7 +305,17 @@ export function AddMockDataButton() {
                 : 'bg-primary-600 text-white hover:bg-primary-700'
             }`}
           >
-            {loading ? 'Fetching...' : success ? 'Done!' : 'Fetch from Upwork (once every 6 hrs)'}
+            {loading ? (
+              <span className="hidden sm:inline">Fetching...</span>
+            ) : success ? (
+              'Done!'
+            ) : (
+              <>
+                <span className="hidden md:inline">Fetch from Upwork (auto-runs every hour)</span>
+                <span className="hidden sm:inline md:hidden">Fetch Jobs</span>
+                <span className="sm:hidden">↻</span>
+              </>
+            )}
           </button>
 
           {loading && (
@@ -295,6 +329,14 @@ export function AddMockDataButton() {
               <span className="text-sm font-medium text-gray-700 min-w-[3rem]">
                 {progress}%
               </span>
+              {estimatedTimeLeft && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-sm text-gray-600 min-w-[4rem]">
+                    {estimatedTimeLeft} left
+                  </span>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -302,16 +344,21 @@ export function AddMockDataButton() {
 
       {/* Last Fetch Info */}
       {lastFetchTime && !loading && (
-        <div className="mt-2 text-sm text-gray-600">
+        <div className="mt-2 text-xs sm:text-sm text-gray-600">
           {(() => {
             const refreshInfo = getTimeUntilRefresh(lastFetchTime);
             return (
-              <div className="flex items-center gap-4">
-                <span>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                {/* Mobile: Just show the time value */}
+                <span className="whitespace-nowrap sm:hidden">
+                  <span className="font-medium text-gray-900">{formatTimeDifference(lastFetchTime)}</span>
+                </span>
+                {/* Desktop: Show full text */}
+                <span className="whitespace-nowrap hidden sm:inline">
                   Last fetched: <span className="font-medium text-gray-900">{formatTimeDifference(lastFetchTime)}</span>
                 </span>
-                <span className="text-gray-300">•</span>
-                <span className={refreshInfo.ready ? 'text-success-600 font-medium' : 'text-gray-600'}>
+                <span className="text-gray-300 hidden sm:inline">•</span>
+                <span className={`whitespace-nowrap hidden sm:inline ${refreshInfo.ready ? 'text-success-600 font-medium' : 'text-gray-600'}`}>
                   {refreshInfo.message}
                 </span>
               </div>

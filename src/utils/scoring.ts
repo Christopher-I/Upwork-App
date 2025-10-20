@@ -3,6 +3,10 @@ import { Settings } from '../types/settings';
 import { scoreJobWithChatGPT } from '../lib/openai';
 import { scoreJobWithClaude } from '../lib/claude';
 import { AI_PROVIDER } from '../config/ai';
+import { detectJobTags } from './tagDetection';
+
+// Import recommendation filter logic from dedicated file
+export { applyRecommendationFilters as applyHardFilters, checkStarCriteria } from './recommendationFilters';
 
 /**
  * Calculate complete job score (0-100 points)
@@ -74,6 +78,11 @@ export async function calculateJobScore(
     (job as any).isTechnicalOnly = aiScores.businessImpact.isTechnicalOnly;
   }
 
+  // Detect and assign tags
+  const tags = detectJobTags(job);
+  (job as any).tags = tags;
+  console.log(`🏷️  Detected ${tags.length} tags: ${tags.slice(0, 5).join(', ')}${tags.length > 5 ? '...' : ''}`);
+
   const total =
     breakdown.clientQuality.subtotal +
     breakdown.keywordsMatch +
@@ -105,6 +114,10 @@ export function calculateJobScoreSync(
     ehrPotential: scoreEHRPotential(job, settings),
     redFlags: scoreRedFlags(job),
   };
+
+  // Detect and assign tags
+  const tags = detectJobTags(job);
+  (job as any).tags = tags;
 
   const total =
     breakdown.clientQuality.subtotal +
@@ -220,7 +233,31 @@ export function scoreKeywordsMatch(
   // 1 keyword = 5 points (33%)
   // 2 keywords = 10 points (67%)
   // 3+ keywords = 15 points (100%)
-  const score = Math.min(matchCount * 5, 15);
+  let score = Math.min(matchCount * 5, 15);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SPECIALTY BONUSES - Prioritize jobs matching our core expertise
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Webflow bonus (+10 points - our #1 specialty)
+  if (text.includes('webflow') || text.includes('web flow')) {
+    const bonusAmount = 10;
+    score = Math.min(score + bonusAmount, 15); // Add bonus but cap at keyword max
+    matchedKeywords.push('✨ WEBFLOW (YOUR #1 SPECIALTY - PRIORITY)');
+    console.log(`   +${bonusAmount} points: Webflow specialty bonus`);
+  }
+
+  // Portal bonus (+5 points - our #2 specialty)
+  const portalKeywords = ['portal', 'member area', 'membership', 'dashboard', 'member site'];
+  const hasPortalKeyword = portalKeywords.some((kw) => text.includes(kw));
+
+  if (hasPortalKeyword) {
+    const bonusAmount = 5;
+    score = Math.min(score + bonusAmount, 15); // Add bonus but cap at keyword max
+    matchedKeywords.push('✨ PORTAL (YOUR #2 SPECIALTY)');
+    console.log(`   +${bonusAmount} points: Portal specialty bonus`);
+  }
+
   return Math.round(score);
 }
 
@@ -524,6 +561,14 @@ export function scoreEHRPotential(
 
 /**
  * Helper: Estimate project price based on complexity indicators
+ * FALLBACK ONLY - Claude AI provides much more accurate market-based pricing
+ *
+ * These estimates align with Fair Market Value guidelines:
+ * - Landing pages (1-3 pages): $1,500 - $3,000
+ * - Small business websites (5-10 pages): $3,000 - $8,000
+ * - E-commerce sites: $5,000 - $15,000
+ * - Custom web apps/portals: $8,000 - $25,000
+ * - Complex platforms with integrations: $15,000 - $50,000+
  */
 function estimatePrice(job: Partial<Job>, settings: Settings): number {
   // If budget specified and reasonable, use it
@@ -531,112 +576,215 @@ function estimatePrice(job: Partial<Job>, settings: Settings): number {
     return job.budget;
   }
 
-  // Estimate based on project complexity (not specific packages)
+  // Estimate based on project complexity using market-standard values
   const text = `${job.title || ''} ${job.description || ''}`.toLowerCase();
 
-  // High complexity indicators
+  // Very high complexity indicators ($15K-$50K+)
+  const veryHighComplexity = [
+    'platform',
+    'saas',
+    'marketplace',
+    'multi-tenant',
+    'api integration',
+    'payment processing',
+    'authentication system',
+    'real-time',
+    'websocket',
+    'microservices',
+  ];
+
+  // High complexity indicators ($8K-$25K)
   const highComplexity = [
     'portal',
     'dashboard',
-    'ecommerce',
-    'multiple',
-    'complex',
-    'custom',
-    'integration',
+    'custom web app',
+    'crm',
     'automation',
+    'integration',
+    'admin panel',
+    'user management',
+    'database design',
   ];
 
-  // Medium complexity indicators
+  // Medium-high complexity indicators ($5K-$15K)
+  const mediumHighComplexity = [
+    'ecommerce',
+    'shopify',
+    'woocommerce',
+    'multi-page',
+    '10+ pages',
+    'custom cms',
+    'blog system',
+    'search functionality',
+  ];
+
+  // Medium complexity indicators ($3K-$8K)
   const mediumComplexity = [
     'website',
     'redesign',
-    'pages',
+    '5-10 pages',
     'blog',
     'cms',
     'seo',
+    'responsive',
+    'contact forms',
   ];
 
-  // Simple indicators
+  // Simple indicators ($1.5K-$3K)
   const simpleIndicators = [
     'landing page',
     'single page',
-    'simple',
+    'simple website',
+    '1-3 pages',
+    'basic site',
   ];
 
   let complexityScore = 0;
 
+  // Very high complexity (add 4 points each)
+  for (const indicator of veryHighComplexity) {
+    if (text.includes(indicator)) complexityScore += 4;
+  }
+
+  // High complexity (add 3 points each)
   for (const indicator of highComplexity) {
+    if (text.includes(indicator)) complexityScore += 3;
+  }
+
+  // Medium-high complexity (add 2 points each)
+  for (const indicator of mediumHighComplexity) {
     if (text.includes(indicator)) complexityScore += 2;
   }
 
+  // Medium complexity (add 1 point each)
   for (const indicator of mediumComplexity) {
     if (text.includes(indicator)) complexityScore += 1;
   }
 
+  // Simple indicators (subtract 1 point)
   for (const indicator of simpleIndicators) {
     if (text.includes(indicator)) complexityScore -= 1;
   }
 
-  // Estimate price based on complexity
-  if (complexityScore >= 4) return 4000; // High complexity
-  if (complexityScore >= 2) return 3000; // Medium-high
-  if (complexityScore >= 0) return 2500; // Medium
-  return 2000; // Simple project
+  // Estimate price based on complexity score using market-standard values
+  if (complexityScore >= 12) return 35000; // Complex platform ($35K)
+  if (complexityScore >= 8) return 20000;  // Custom web app ($20K)
+  if (complexityScore >= 5) return 12000;  // E-commerce or advanced site ($12K)
+  if (complexityScore >= 3) return 8000;   // Multi-page with features ($8K)
+  if (complexityScore >= 1) return 5000;   // Small business website ($5K)
+  if (complexityScore >= 0) return 3000;   // Basic website ($3K)
+  return 2000; // Simple landing page ($2K)
 }
 
 /**
  * Helper: Estimate project hours based on complexity
+ * FALLBACK ONLY - Claude AI provides much more accurate hour estimation
+ *
+ * These estimates align with market-standard hour guidelines:
+ * - Landing pages: 15-25 hours
+ * - Small business websites: 30-60 hours
+ * - E-commerce sites: 60-120 hours
+ * - Custom web apps: 80-200 hours
+ * - Complex platforms: 200-400+ hours
  */
 function estimateHours(job: Partial<Job>, settings: Settings): number {
   const text = `${job.title || ''} ${job.description || ''}`.toLowerCase();
 
-  // High complexity projects
+  // Very high complexity indicators (200-400+ hours)
+  const veryHighComplexity = [
+    'platform',
+    'saas',
+    'marketplace',
+    'multi-tenant',
+    'api integration',
+    'payment processing',
+    'authentication system',
+    'real-time',
+    'websocket',
+    'microservices',
+  ];
+
+  // High complexity indicators (80-200 hours)
   const highComplexity = [
     'portal',
     'dashboard',
-    'ecommerce',
-    'multiple',
-    'complex',
-    'custom',
-    'integration',
+    'custom web app',
+    'crm',
     'automation',
+    'integration',
+    'admin panel',
+    'user management',
+    'database design',
   ];
 
-  // Medium complexity
+  // Medium-high complexity indicators (60-120 hours)
+  const mediumHighComplexity = [
+    'ecommerce',
+    'shopify',
+    'woocommerce',
+    'multi-page',
+    '10+ pages',
+    'custom cms',
+    'blog system',
+    'search functionality',
+  ];
+
+  // Medium complexity indicators (30-60 hours)
   const mediumComplexity = [
     'website',
     'redesign',
-    'pages',
+    '5-10 pages',
     'blog',
     'cms',
+    'seo',
+    'responsive',
+    'contact forms',
   ];
 
-  // Simple projects
+  // Simple indicators (15-25 hours)
   const simpleIndicators = [
     'landing page',
     'single page',
-    'simple',
+    'simple website',
+    '1-3 pages',
+    'basic site',
   ];
 
   let complexityScore = 0;
 
+  // Very high complexity (add 4 points each)
+  for (const indicator of veryHighComplexity) {
+    if (text.includes(indicator)) complexityScore += 4;
+  }
+
+  // High complexity (add 3 points each)
   for (const indicator of highComplexity) {
+    if (text.includes(indicator)) complexityScore += 3;
+  }
+
+  // Medium-high complexity (add 2 points each)
+  for (const indicator of mediumHighComplexity) {
     if (text.includes(indicator)) complexityScore += 2;
   }
 
+  // Medium complexity (add 1 point each)
   for (const indicator of mediumComplexity) {
     if (text.includes(indicator)) complexityScore += 1;
   }
 
+  // Simple indicators (subtract 1 point)
   for (const indicator of simpleIndicators) {
     if (text.includes(indicator)) complexityScore -= 1;
   }
 
-  // Estimate hours based on complexity
-  if (complexityScore >= 4) return 45; // High complexity
-  if (complexityScore >= 2) return 35; // Medium-high
-  if (complexityScore >= 0) return 30; // Medium
-  return 20; // Simple project
+  // Estimate hours based on complexity score using market-standard values
+  if (complexityScore >= 12) return 300; // Complex platform (300+ hours)
+  if (complexityScore >= 8) return 150;  // Custom web app (150 hours)
+  if (complexityScore >= 5) return 90;   // E-commerce or advanced site (90 hours)
+  if (complexityScore >= 3) return 60;   // Multi-page with features (60 hours)
+  if (complexityScore >= 1) return 45;   // Small business website (45 hours)
+  if (complexityScore >= 0) return 30;   // Basic website (30 hours)
+  return 20; // Simple landing page (20 hours)
 }
 
 /**
@@ -672,43 +820,15 @@ export function scoreRedFlags(job: Partial<Job>): number {
 }
 
 /**
- * Apply hard filters after scoring
+ * ═══════════════════════════════════════════════════════════════════════════
+ * RECOMMENDATION FILTERS MOVED TO: src/utils/recommendationFilters.ts
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * The applyHardFilters function has been moved to a dedicated file for
+ * easier maintenance and discovery.
+ *
+ * It is re-exported at the top of this file for backward compatibility.
+ *
+ * See: src/utils/recommendationFilters.ts for the full implementation
+ * ═══════════════════════════════════════════════════════════════════════════
  */
-export function applyHardFilters(
-  job: Partial<Job> & { score: number; estimatedEHR: number; scoreBreakdown?: ScoreBreakdown },
-  settings: Settings
-): 'recommended' | 'not_recommended' {
-  // Auto-recommend high-value jobs ($10,000+)
-  const hasVeryHighMarketRate = (job.estimatedPrice || 0) >= 10000;
-  if (hasVeryHighMarketRate) {
-    return 'recommended';
-  }
-
-  // Check for "star" criteria:
-  // - Has open budget
-  // - Has team language ("we/our")
-  // - Market rate estimate >= $5,000
-  // - Client rating is NOT terrible (>= 4/5 OR is new client with 0 rating)
-  const hasOpenBudget = (job.scoreBreakdown?.professionalSignals?.openBudget || 0) > 0;
-  const hasTeamLanguage = (job.scoreBreakdown?.professionalSignals?.weLanguage || 0) > 0;
-  const hasHighMarketRate = (job.estimatedPrice || 0) >= 5000;
-  const clientRating = job.client?.rating || 0;
-  const clientNotTerrible = clientRating === 0 || clientRating >= 4; // New client (0) OR good rating (4+)
-
-  const hasStarCriteria = hasOpenBudget && hasTeamLanguage && hasHighMarketRate && clientNotTerrible;
-
-  // If job has star criteria, auto-recommend it (bypass normal filters)
-  if (hasStarCriteria) {
-    return 'recommended';
-  }
-
-  // Otherwise, must pass ALL hard filters
-  const passes =
-    job.score >= settings.minScore &&
-    job.estimatedEHR >= settings.minEHR &&
-    job.client?.paymentVerified === true &&
-    !job.isDuplicate &&
-    !job.isRepost;
-
-  return passes ? 'recommended' : 'not_recommended';
-}

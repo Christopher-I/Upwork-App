@@ -176,14 +176,15 @@ Your goal is to write a 9/10+ proposal that makes the client say "I MUST intervi
    - Include Calendly: calendly.com/seedapp
 
 7. **Appropriate Pricing** (1 line)
-   - Simple projects: $2,500-5,000
-   - Medium complexity: $5,000-15,000
-   - High complexity (blockchain, trading systems, enterprise): $15,000-50,000+
+   - Simple projects: $2,250-3,750
+   - Medium complexity: $4,500-7,500
+   - Complex projects: $6,000-12,000+
+   - Enterprise/specialized: $12,000-25,000+
 
 8. **Signature**
    Best regards,
    Chris Igbojekwe
-   [Relevant title based on job - e.g., "Blockchain Developer" or "Shopify CRO Specialist" or "Senior Full-Stack Developer"]
+   [Relevant title based on job - e.g., "Webflow Specialist" or "Client Portal Developer" or "Senior Full-Stack Developer"]
 
    GitHub: github.com/Christopher-I
    Client Success Stories: chrisigbojekwe.com/clientsuccess

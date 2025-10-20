@@ -541,11 +541,11 @@ exports.fetchUpworkJobs = functions.https.onCall({ cors: true }, async (request)
 });
 /**
  * Scheduled function that automatically fetches, scores, and saves Upwork jobs
- * Runs every 6 hours via Cloud Scheduler
+ * Runs every hour via Cloud Scheduler
  * This function does everything autonomously without frontend involvement
  */
 exports.scheduledFetchUpworkJobs = functions.scheduler.onSchedule({
-    schedule: '0 */6 * * *', // Every 6 hours at :00 minutes (conservative start)
+    schedule: '0 * * * *', // Every hour at :00 minutes
     timeZone: 'America/New_York', // EDT/EST
     memory: '1GiB', // More memory for AI scoring
     timeoutSeconds: 540, // 9 minutes timeout (Cloud Scheduler max is 540)
