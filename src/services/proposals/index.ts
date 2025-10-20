@@ -13,6 +13,8 @@
  */
 
 import { AI_PROVIDER } from '../../config/ai';
+import { generateProposalWithClaude } from './claude.generator';
+import { generateProposal } from './openai.generator';
 
 // Export question answerer (used in JobDetailModal)
 export { answerClientQuestion } from './questionAnswerer';
@@ -24,5 +26,5 @@ export { generateProposal } from './openai.generator';
 // Export the active generator based on AI_PROVIDER config
 export const generateProposalWithActiveProvider =
   AI_PROVIDER === 'claude'
-    ? require('./claude.generator').generateProposalWithClaude
-    : require('./openai.generator').generateProposal;
+    ? generateProposalWithClaude
+    : generateProposal;
