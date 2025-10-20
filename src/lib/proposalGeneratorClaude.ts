@@ -139,12 +139,16 @@ Your goal is to write a 9/10+ proposal that makes the client say "I MUST intervi
    - NOT generic: "I help businesses build systems"
    - SPECIFIC: "I specialize in Solana trading bot development for DeFi protocols, combining Helius RPC monitoring with Python execution engines to prevent MEV attacks"
 
-2. **Portfolio Link** (1 sentence - IMMEDIATELY after first paragraph)
+2. **Portfolio Link** (1 sentence - THIS MUST BE PARAGRAPH 2!!!)
    - Format: "You can see examples of my work here: chrisigbojekwe.com"
-   - CRITICAL: This MUST come right after the positioning sentence (paragraph 1)
-   - Keep it simple and direct
+   - ❌ DO NOT put this later in the proposal
+   - ❌ DO NOT combine with other paragraphs
+   - ✅ MUST be standalone paragraph #2, immediately following paragraph 1
+   - ✅ Must come BEFORE pain/impact paragraph
+   - ✅ Must come BEFORE solution paragraph
+   - ✅ Must come BEFORE social proof paragraph
 
-3. **Pain + Business Impact** (1 sentence)
+3. **Pain + Business Impact** (1 sentence - THIS IS PARAGRAPH 3)
    - Show you understand their SPECIFIC problem and what it's costing them
    - Reference exact pain points from their job description
 
@@ -201,18 +205,19 @@ Your goal is to write a 9/10+ proposal that makes the client say "I MUST intervi
 7. Every sentence must demonstrate technical expertise through concrete details
 8. Add blank line between each paragraph for readability
 
-MUST INCLUDE IN EVERY PROPOSAL:
-- Pain embedded in intro: "Hi, I help [their team type] eliminate [their pain] with [solution type]"
-- **Platform adaptation**: If job mentions specific platform/tool (GHL, Bubble, Webflow, React, etc.), incorporate it naturally into intro and solution sections
-- **CRITICAL: Numbered deliverables format** - Use "1) X, 2) Y, 3) Z" format in solution section
-- **Social proof (2 SEPARATE sentences)**:
+MUST INCLUDE IN EVERY PROPOSAL (IN THIS EXACT ORDER):
+- **Paragraph 1**: Pain embedded in intro: "Hi, I help [their team type] eliminate [their pain] with [solution type]"
+- **Paragraph 2**: Portfolio link IMMEDIATELY after paragraph 1: "You can see examples of my work here: chrisigbojekwe.com" ← THIS MUST BE PARAGRAPH 2!
+- **Paragraph 3**: Pain + Business Impact
+- **Paragraph 4**: Solution with numbered deliverables "1) X, 2) Y, 3) Z"
+- **Paragraph 5**: Social proof (2 SEPARATE sentences)
   - Sentence 1 (optional): Name-drop 1-2 relevant companies (Coinbase/Techstars/EU Green Project) ONLY if relevant. Format: "I've worked with [Company]." NO metrics in this sentence!
   - Sentence 2 (required): "Recently, I helped a [industry] client [achieve results with irregular numbers 52%, 38%, 67%]." NO company names in this sentence!
   - ❌ NEVER say "world-class organizations like"
-- Portfolio: chrisigbojekwe.com/clientsuccess
-- Calendly: calendly.com/seedapp
-- Website: chrisigbojekwe.com
-- GitHub: github.com/Christopher-I
+- **Paragraph 6**: Call to action with Calendly: calendly.com/seedapp
+- **Paragraph 7**: Pricing
+- **Paragraph 8**: Signature with GitHub: github.com/Christopher-I and Client Success Stories: chrisigbojekwe.com/clientsuccess
+- **Platform adaptation**: If job mentions specific platform/tool (GHL, Bubble, Webflow, React, etc.), incorporate it naturally into intro and solution sections
 - Minimum project: $2,500
 
 OUTPUT FORMAT:
