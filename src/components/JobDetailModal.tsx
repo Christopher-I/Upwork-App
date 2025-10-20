@@ -8,6 +8,7 @@ import { answerClientQuestion } from '../lib/questionAnswerer';
 import { AI_PROVIDER } from '../config/ai';
 import { useSettings } from '../hooks/useSettings';
 import { PricingRecommendation } from './PricingRecommendation';
+import * as jobService from '../services/jobService';
 
 interface JobDetailModalProps {
   job: Job;
@@ -109,12 +110,10 @@ export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) 
 
   const handleMarkAsApplied = async () => {
     try {
-      await updateDoc(doc(db, 'jobs', currentJob.id), {
-        applied: true,
-        appliedAt: new Date(),
-        appliedProposal: currentJob.proposal?.content || '',
-        status: 'applied',
-      });
+      await jobService.markJobAsApplied(
+        currentJob.id,
+        currentJob.proposal?.content || ''
+      );
       alert('✅ Marked as applied!');
     } catch (error) {
       console.error('Failed to mark as applied:', error);
@@ -126,11 +125,10 @@ export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) 
     const projectValue = prompt('Enter project value (optional):');
 
     try {
-      await updateDoc(doc(db, 'jobs', currentJob.id), {
-        won: true,
-        wonAt: new Date(),
-        actualProjectValue: projectValue ? parseFloat(projectValue) : null,
-      });
+      await jobService.markJobAsWon(
+        currentJob.id,
+        projectValue ? parseFloat(projectValue) : undefined
+      );
       alert('🎉 Congratulations on winning the job!');
     } catch (error) {
       console.error('Failed to mark as won:', error);
@@ -167,17 +165,10 @@ export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) 
 
   const handleToggleRecommendation = async () => {
     try {
-      const newClassification = currentJob.finalClassification === 'recommended'
-        ? 'not_recommended'
-        : 'recommended';
-
-      await updateDoc(doc(db, 'jobs', currentJob.id), {
-        finalClassification: newClassification,
-        manualOverride: {
-          forceRecommended: newClassification === 'recommended',
-          overriddenAt: new Date(),
-        },
-      });
+      const newClassification = await jobService.toggleJobRecommendation(
+        currentJob.id,
+        currentJob.finalClassification
+      );
 
       const action = newClassification === 'recommended' ? 'added to' : 'removed from';
       alert(`✅ Job ${action} Recommended!`);
