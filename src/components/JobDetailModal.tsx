@@ -4,6 +4,7 @@ import { db } from '../lib/firebase';
 import { Job } from '../types/job';
 import { generateProposal } from '../lib/proposalGenerator';
 import { generateProposalWithClaude } from '../lib/proposalGeneratorClaude';
+import { answerClientQuestion } from '../lib/questionAnswerer';
 import { AI_PROVIDER } from '../config/ai';
 import { useSettings } from '../hooks/useSettings';
 import { PricingRecommendation } from './PricingRecommendation';
@@ -11,14 +12,20 @@ import { PricingRecommendation } from './PricingRecommendation';
 interface JobDetailModalProps {
   job: Job;
   onClose: () => void;
+  viewMode: 'admin' | 'sales';
 }
 
-export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
+export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) {
   const { settings } = useSettings();
   const [currentJob, setCurrentJob] = useState<Job>(job);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedProposal, setEditedProposal] = useState('');
+
+  // Question answering state
+  const [clientQuestion, setClientQuestion] = useState('');
+  const [generatedAnswer, setGeneratedAnswer] = useState('');
+  const [isGeneratingAnswer, setIsGeneratingAnswer] = useState(false);
 
   // Real-time listener for job updates
   useEffect(() => {
@@ -131,6 +138,33 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
     }
   };
 
+  const handleGenerateAnswer = async () => {
+    if (!clientQuestion.trim()) {
+      alert('⚠️ Please enter a question first.');
+      return;
+    }
+
+    setIsGeneratingAnswer(true);
+    setGeneratedAnswer('');
+
+    try {
+      const answer = await answerClientQuestion(clientQuestion, currentJob);
+      setGeneratedAnswer(answer);
+    } catch (error) {
+      console.error('Failed to generate answer:', error);
+      alert('❌ Failed to generate answer. Please try again.');
+    } finally {
+      setIsGeneratingAnswer(false);
+    }
+  };
+
+  const handleCopyAnswer = () => {
+    if (generatedAnswer) {
+      navigator.clipboard.writeText(generatedAnswer);
+      alert('✅ Answer copied to clipboard!');
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
@@ -190,10 +224,12 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
           <div className="bg-gray-100 rounded-lg p-4">
             <h3 className="font-semibold text-gray-900 mb-3 text-base">Client Info</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-gray-500">Company:</span>{' '}
-                <span className="font-medium text-gray-900">{job.client.name}</span>
-              </div>
+              {job.client.name !== 'Anonymous' && (
+                <div>
+                  <span className="text-gray-500">Company:</span>{' '}
+                  <span className="font-medium text-gray-900">{job.client.name}</span>
+                </div>
+              )}
               <div>
                 <span className="text-gray-500">Payment:</span>{' '}
                 {job.client.paymentVerified ? (
@@ -202,16 +238,20 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                   <span className="text-danger-600">Not verified</span>
                 )}
               </div>
-              <div>
-                <span className="text-gray-500">Total Spent:</span>{' '}
-                <span className="font-medium text-gray-900">
-                  ${job.client.totalSpent.toLocaleString()}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500">Total Hires:</span>{' '}
-                <span className="font-medium text-gray-900">{job.client.totalHires}</span>
-              </div>
+              {viewMode === 'admin' && (
+                <>
+                  <div>
+                    <span className="text-gray-500">Total Spent:</span>{' '}
+                    <span className="font-medium text-gray-900">
+                      ${job.client.totalSpent.toLocaleString()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Total Hires:</span>{' '}
+                    <span className="font-medium text-gray-900">{job.client.totalHires}</span>
+                  </div>
+                </>
+              )}
               <div>
                 <span className="text-gray-500">Rating:</span>{' '}
                 <span className="font-medium text-gray-900">
@@ -221,9 +261,10 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
             </div>
           </div>
 
-          {/* Pricing Analysis */}
-          <div className="bg-success-50 border border-success-200 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-3 text-base">Pricing Analysis</h3>
+          {/* Pricing Analysis (Admin View Only) */}
+          {viewMode === 'admin' && (
+            <div className="bg-success-50 border border-success-200 rounded-lg p-4">
+              <h3 className="font-semibold text-gray-900 mb-3 text-base">Pricing Analysis</h3>
             <div className="space-y-3 text-sm">
               {/* Client's Offer */}
               <div className="flex items-center justify-between pb-3 border-b border-success-100">
@@ -275,9 +316,11 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                 </div>
               )}
             </div>
-          </div>
+            </div>
+          )}
 
-          {/* Score Breakdown */}
+          {/* Score Breakdown (Admin View Only) */}
+          {viewMode === 'admin' && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900 text-xl">
@@ -377,6 +420,7 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
               )}
             </div>
           </div>
+          )}
 
           {/* Job Description */}
           <div>
@@ -385,6 +429,74 @@ export function JobDetailModal({ job, onClose }: JobDetailModalProps) {
             </h3>
             <div className="bg-gray-100 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed break-words overflow-x-auto">
               {job.description}
+            </div>
+          </div>
+
+          {/* AI Question Answerer */}
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="font-semibold text-gray-900 mb-3 text-base">
+              Answer Client Questions
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Enter any question the client asked in their job description, and get a concise, expert answer ready to paste into Upwork.
+            </p>
+
+            <div className="space-y-4">
+              {/* Question Input */}
+              <div>
+                <label htmlFor="client-question" className="block text-sm font-medium text-gray-700 mb-2">
+                  Client's Question
+                </label>
+                <textarea
+                  id="client-question"
+                  value={clientQuestion}
+                  onChange={(e) => setClientQuestion(e.target.value)}
+                  placeholder="e.g., Can you integrate with our existing CRM system?"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm resize-none"
+                  rows={3}
+                  disabled={isGeneratingAnswer}
+                />
+              </div>
+
+              {/* Generate Button */}
+              <button
+                onClick={handleGenerateAnswer}
+                disabled={isGeneratingAnswer || !clientQuestion.trim()}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                {isGeneratingAnswer ? 'Generating Answer...' : 'Generate Answer'}
+              </button>
+
+              {/* Generating State */}
+              {isGeneratingAnswer && (
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <div className="flex items-center gap-3">
+                    <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600"></div>
+                    <p className="text-gray-700 text-sm">Crafting your expert answer...</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Generated Answer */}
+              {generatedAnswer && !isGeneratingAnswer && (
+                <div className="bg-success-50 rounded-lg p-4 border border-success-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-gray-900 text-sm">Your Answer:</h4>
+                    <button
+                      onClick={handleCopyAnswer}
+                      className="px-3 py-1.5 bg-success-600 text-white rounded-md hover:bg-success-700 font-medium text-xs transition-colors"
+                    >
+                      Copy Answer
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {generatedAnswer}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {generatedAnswer.split(' ').length} words
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

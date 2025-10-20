@@ -3,9 +3,10 @@ import { Job } from '../types/job';
 interface JobCardProps {
   job: Job;
   onClick: () => void;
+  viewMode: 'admin' | 'sales';
 }
 
-export function JobCard({ job, onClick }: JobCardProps) {
+export function JobCard({ job, onClick, viewMode }: JobCardProps) {
   // Show star only if ALL three conditions are met:
   // 1. Has open budget
   // 2. Has team language ("we/our")
@@ -39,25 +40,29 @@ export function JobCard({ job, onClick }: JobCardProps) {
       </div>
 
       {/* Client info with verified badge */}
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-sm font-medium text-gray-700">{job.client.name}</span>
-        {job.client.paymentVerified && (
-          <span className="text-success-600 text-xs">✓ Verified</span>
-        )}
-      </div>
+      {job.client.name !== 'Anonymous' && (
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-sm font-medium text-gray-700">{job.client.name}</span>
+          {job.client.paymentVerified && (
+            <span className="text-success-600 text-xs">✓ Verified</span>
+          )}
+        </div>
+      )}
 
-      {/* Inline badges - Score, Fair Market Value, EHR */}
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border ${scoreColorClass}`}>
-          {job.score}
-        </span>
-        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-success-50 text-success-700 border border-success-200">
-          ${job.estimatedPrice?.toLocaleString() || 'TBD'}
-        </span>
-        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
-          ${Math.round(job.estimatedEHR)}/hr
-        </span>
-      </div>
+      {/* Inline badges - Score, Fair Market Value, EHR (Admin View Only) */}
+      {viewMode === 'admin' && (
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border ${scoreColorClass}`}>
+            {job.score}
+          </span>
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-success-50 text-success-700 border border-success-200">
+            ${job.estimatedPrice?.toLocaleString() || 'TBD'}
+          </span>
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
+            ${Math.round(job.estimatedEHR)}/hr
+          </span>
+        </div>
+      )}
 
       {/* Description preview (2 lines max) */}
       <p className="text-sm text-gray-600 line-clamp-2 mb-3">

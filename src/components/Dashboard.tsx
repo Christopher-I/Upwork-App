@@ -20,6 +20,30 @@ export function Dashboard() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
+  /**
+   * View Mode Toggle
+   *
+   * - Admin View (default): Shows all metrics, scores, analytics
+   * - Sales View: Simplified interface for proposal submission
+   *
+   * What's hidden in Sales View:
+   * - Pipeline value calculations
+   * - Score breakdowns (client quality, keywords, etc.)
+   * - EHR metrics and fair market value
+   * - Detailed client history (total spent/hires)
+   *
+   * What's visible in Sales View:
+   * - Daily stats (recommended/applied/total)
+   * - Pricing recommendations
+   * - Job descriptions
+   * - Proposal generator
+   * - Essential client info (payment verified, rating)
+   */
+  const [viewMode, setViewMode] = useState<'admin' | 'sales'>(() => {
+    const saved = localStorage.getItem('viewMode');
+    return (saved as 'admin' | 'sales') || 'admin'; // Default to admin
+  });
+
   // Get default filter options
   const getDefaultFilters = (): FilterOptions => ({
     budgetType: 'all',
@@ -91,6 +115,12 @@ export function Dashboard() {
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
     localStorage.setItem('activeTab', tab);
+  };
+
+  // Save view mode to localStorage when it changes
+  const handleViewModeChange = (mode: 'admin' | 'sales') => {
+    setViewMode(mode);
+    localStorage.setItem('viewMode', mode);
   };
 
   // Save filters to localStorage when they change (for the active tab)
@@ -281,7 +311,8 @@ export function Dashboard() {
                 AI-powered job recommendations with proposals ready to send
               </p>
             </div>
-            <div className="flex gap-1 sm:gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <ViewModeToggle viewMode={viewMode} onChange={handleViewModeChange} />
               <button
                 onClick={() => setShowSettings(true)}
                 className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
@@ -340,8 +371,8 @@ export function Dashboard() {
           </TabButton>
         </div>
 
-        {/* Total Market Value - Show on recommended and all jobs tabs */}
-        {(activeTab === 'recommended' || activeTab === 'all') && (
+        {/* Total Market Value - Show on recommended and all jobs tabs (Admin View Only) */}
+        {viewMode === 'admin' && (activeTab === 'recommended' || activeTab === 'all') && (
           <div className="bg-gradient-to-r from-success-50 to-success-100 border border-success-200 rounded-lg px-6 py-4 mb-6">
             <div className="flex items-center justify-between">
               <div>
@@ -392,6 +423,7 @@ export function Dashboard() {
                 key={job.id}
                 job={job}
                 onClick={() => setSelectedJob(job)}
+                viewMode={viewMode}
               />
             ))}
           </div>
@@ -402,6 +434,7 @@ export function Dashboard() {
           <JobDetailModal
             job={selectedJob}
             onClose={() => setSelectedJob(null)}
+            viewMode={viewMode}
           />
         )}
 
@@ -418,6 +451,40 @@ export function Dashboard() {
   );
 }
 
+function ViewModeToggle({
+  viewMode,
+  onChange,
+}: {
+  viewMode: 'admin' | 'sales';
+  onChange: (mode: 'admin' | 'sales') => void;
+}) {
+  return (
+    <div className="flex items-center gap-0 bg-white border border-gray-300 rounded-lg overflow-hidden">
+      <button
+        onClick={() => onChange('admin')}
+        className={`px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium transition-colors ${
+          viewMode === 'admin'
+            ? 'bg-primary-600 text-white'
+            : 'text-gray-700 hover:bg-gray-50'
+        }`}
+      >
+        <span className="hidden sm:inline">Admin</span>
+        <span className="sm:hidden">📊</span>
+      </button>
+      <button
+        onClick={() => onChange('sales')}
+        className={`px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium transition-colors ${
+          viewMode === 'sales'
+            ? 'bg-success-600 text-white'
+            : 'text-gray-700 hover:bg-gray-50'
+        }`}
+      >
+        <span className="hidden sm:inline">Sales</span>
+        <span className="sm:hidden">💼</span>
+      </button>
+    </div>
+  );
+}
 
 function TabButton({
   active,

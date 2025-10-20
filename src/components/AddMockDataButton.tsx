@@ -68,11 +68,11 @@ function getTimeUntilRefresh(lastFetch: Date): { ready: boolean; message: string
   const minutesLeft = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
   if (hoursLeft > 0) {
-    return { ready: false, message: `Next refresh in ${hoursLeft}h ${minutesLeft}m` };
+    return { ready: false, message: `Next ${hoursLeft}h ${minutesLeft}m` };
   } else if (minutesLeft > 0) {
-    return { ready: false, message: `Next refresh in ${minutesLeft}m` };
+    return { ready: false, message: `Next ${minutesLeft}m` };
   } else {
-    return { ready: true, message: 'Ready to refresh' };
+    return { ready: true, message: '' };
   }
 }
 
@@ -311,7 +311,7 @@ export function AddMockDataButton() {
               'Done!'
             ) : (
               <>
-                <span className="hidden md:inline">Fetch from Upwork (auto-runs every hour)</span>
+                <span className="hidden md:inline">Fetch from Upwork</span>
                 <span className="hidden sm:inline md:hidden">Fetch Jobs</span>
                 <span className="sm:hidden">↻</span>
               </>
@@ -355,7 +355,7 @@ export function AddMockDataButton() {
                 </span>
                 {/* Desktop: Show full text */}
                 <span className="whitespace-nowrap hidden sm:inline">
-                  Last fetched: <span className="font-medium text-gray-900">{formatTimeDifference(lastFetchTime)}</span>
+                  last: <span className="font-medium text-gray-900">{formatTimeDifference(lastFetchTime)}</span>
                 </span>
                 <span className="text-gray-300 hidden sm:inline">•</span>
                 <span className={`whitespace-nowrap hidden sm:inline ${refreshInfo.ready ? 'text-success-600 font-medium' : 'text-gray-600'}`}>
