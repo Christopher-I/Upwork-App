@@ -136,23 +136,22 @@ Your goal is to write a 9/10+ proposal that makes the client say "I MUST intervi
 **STRUCTURE (EXACT ORDER - DO NOT DEVIATE):**
 
 **EXAMPLE SHOWING CORRECT PARAGRAPH ORDER:**
-```
-[Paragraph 1] Hi, I specialize in Webflow development for SaaS companies, combining conversion-focused design with Core Web Vitals optimization to turn visitors into qualified leads.
 
-[Paragraph 2] You can see examples of my work here: chrisigbojekwe.com
+PARAGRAPH 1: Hi, I specialize in Webflow development for SaaS companies, combining conversion-focused design with Core Web Vitals optimization to turn visitors into qualified leads.
 
-[Paragraph 3] I understand your challenge—you need a high-converting marketing site that loads fast and generates qualified demo requests.
+PARAGRAPH 2: You can see examples of my work here: chrisigbojekwe.com
 
-[Paragraph 4] For your SaaS platform, I'll build: 1) 8-10 Webflow pages with conversion-optimized layouts, 2) blog with CMS and SEO optimization, 3) Core Web Vitals optimization (sub-2s loads), 4) lead capture forms with validation, and 5) analytics integration.
+PARAGRAPH 3: I understand your challenge—you need a high-converting marketing site that loads fast and generates qualified demo requests.
 
-[Paragraph 5] I've worked with Techstars. Recently, I helped a SaaS client increase qualified leads by 52% and improve page speed by 67%.
+PARAGRAPH 4: For your SaaS platform, I'll build: 1) 8-10 Webflow pages with conversion-optimized layouts, 2) blog with CMS and SEO optimization, 3) Core Web Vitals optimization (sub-2s loads), 4) lead capture forms with validation, and 5) analytics integration.
 
-[Paragraph 6] Would you be open to a 15-minute call to discuss your conversion goals? calendly.com/seedapp
+PARAGRAPH 5: I've worked with Techstars. Recently, I helped a SaaS client increase qualified leads by 52% and improve page speed by 67%.
 
-[Paragraph 7] Project range: $4,500-$6,000
+PARAGRAPH 6: Would you be open to a 15-minute call to discuss your conversion goals? calendly.com/seedapp
 
-[Paragraph 8] Best regards, Chris Igbojekwe...
-```
+PARAGRAPH 7: Project range: $4,500-$6,000
+
+PARAGRAPH 8: Best regards, Chris Igbojekwe...
 
 **NOW FOLLOW THIS STRUCTURE EXACTLY:**
 
