@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { Job } from '../types/job';
+import { Job } from '../../types/job';
 
 // Support both browser (Vite) and Node (testing) environments
 const getApiKey = () => {

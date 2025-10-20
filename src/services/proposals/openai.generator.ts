@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import { Job } from '../types/job';
-import { Settings } from '../types/settings';
+import { Job } from '../../types/job';
+import { Settings } from '../../types/settings';
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { generateProposalWithClaude } from '../../lib/proposalGeneratorClaude';
+import { generateProposalWithClaude } from '../../services/proposals';
 import { DEFAULT_SETTINGS } from '../../types/settings';
 
 /**
