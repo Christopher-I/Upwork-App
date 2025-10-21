@@ -14,6 +14,30 @@ const upworkClientId = defineString('UPWORK_CLIENT_ID');
 const upworkClientSecret = defineString('UPWORK_CLIENT_SECRET');
 
 /**
+ * Helper function to convert Firestore Timestamp or ISO string to Date
+ */
+function toDate(value: any): Date | null {
+  if (!value) return null;
+
+  // Check if it's a Firestore Timestamp object
+  if (value.toDate && typeof value.toDate === 'function') {
+    return value.toDate();
+  }
+
+  // Check if it's an ISO string
+  if (typeof value === 'string') {
+    return new Date(value);
+  }
+
+  // Already a Date object
+  if (value instanceof Date) {
+    return value;
+  }
+
+  return null;
+}
+
+/**
  * Build GraphQL query for job search with dynamic filters
  * Note: Not currently used - queries are built inline for simplicity
  */
@@ -298,7 +322,7 @@ export const fetchUpworkJobs = functions.https.onCall(
 
       // Check if token is expired
       const now = new Date();
-      const expiresAt = storedTokens?.expires_at ? new Date(storedTokens.expires_at) : null;
+      const expiresAt = toDate(storedTokens?.expires_at);
       const isExpired = expiresAt ? expiresAt < now : true;
 
       if (expiresAt) {
@@ -670,7 +694,7 @@ export const scheduledFetchUpworkJobs = functions.scheduler.onSchedule(
 
       // Check if token is expired
       const now = new Date();
-      const expiresAt = storedTokens?.expires_at ? new Date(storedTokens.expires_at) : null;
+      const expiresAt = toDate(storedTokens?.expires_at);
       const isExpired = expiresAt ? expiresAt < now : true;
 
       if (expiresAt) {

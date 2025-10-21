@@ -47,6 +47,26 @@ if (!admin.apps.length) {
 const upworkClientId = (0, params_1.defineString)('UPWORK_CLIENT_ID');
 const upworkClientSecret = (0, params_1.defineString)('UPWORK_CLIENT_SECRET');
 /**
+ * Helper function to convert Firestore Timestamp or ISO string to Date
+ */
+function toDate(value) {
+    if (!value)
+        return null;
+    // Check if it's a Firestore Timestamp object
+    if (value.toDate && typeof value.toDate === 'function') {
+        return value.toDate();
+    }
+    // Check if it's an ISO string
+    if (typeof value === 'string') {
+        return new Date(value);
+    }
+    // Already a Date object
+    if (value instanceof Date) {
+        return value;
+    }
+    return null;
+}
+/**
  * Build GraphQL query for job search with dynamic filters
  * Note: Not currently used - queries are built inline for simplicity
  */
@@ -296,7 +316,7 @@ exports.fetchUpworkJobs = functions.https.onCall({ cors: true }, async (request)
         console.log('  - expires_at:', (storedTokens === null || storedTokens === void 0 ? void 0 : storedTokens.expires_at) || 'MISSING');
         // Check if token is expired
         const now = new Date();
-        const expiresAt = (storedTokens === null || storedTokens === void 0 ? void 0 : storedTokens.expires_at) ? new Date(storedTokens.expires_at) : null;
+        const expiresAt = toDate(storedTokens === null || storedTokens === void 0 ? void 0 : storedTokens.expires_at);
         const isExpired = expiresAt ? expiresAt < now : true;
         if (expiresAt) {
             const hoursUntilExpiry = (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60);
@@ -601,7 +621,7 @@ exports.scheduledFetchUpworkJobs = functions.scheduler.onSchedule({
         console.log('  - expires_at:', (storedTokens === null || storedTokens === void 0 ? void 0 : storedTokens.expires_at) || 'MISSING');
         // Check if token is expired
         const now = new Date();
-        const expiresAt = (storedTokens === null || storedTokens === void 0 ? void 0 : storedTokens.expires_at) ? new Date(storedTokens.expires_at) : null;
+        const expiresAt = toDate(storedTokens === null || storedTokens === void 0 ? void 0 : storedTokens.expires_at);
         const isExpired = expiresAt ? expiresAt < now : true;
         if (expiresAt) {
             const hoursUntilExpiry = (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60);
