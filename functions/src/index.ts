@@ -146,23 +146,34 @@ async function fetchJobsForSearch(
   const graphql = new Graphql(apiClient);
 
   try {
-    // Make GraphQL request using Upwork OAuth2 client's Graphql router
-    const response: any = await new Promise((resolve, reject) => {
-        // Build title expression with OR operators for multiple keywords
-        // This allows jobs matching ANY of the keywords
-        const titleExpression = searchTerm || '';
+    // PAGINATION SUPPORT: Fetch all pages, not just first 50
+    let hasNextPage = true;
+    let cursor = "0";
+    let pageCount = 0;
+    const MAX_PAGES = 10; // Safety limit: 10 pages * 100 = 1000 jobs max per search
 
-        // Use marketplaceJobPostingsSearch (not marketplaceJobPostings) for search functionality
+    while (hasNextPage && pageCount < MAX_PAGES) {
+      pageCount++;
+      console.log(`  Fetching page ${pageCount} for "${searchTerm}" (cursor: ${cursor})...`);
+
+      // Make GraphQL request using Upwork OAuth2 client's Graphql router
+      const response: any = await new Promise((resolve, reject) => {
+        // IMPROVED SEARCH: Use searchTerm_eq with andTerms_all
+        // This searches BOTH title AND description for better coverage
+        // Alternative: titleExpression_eq only searches titles
         const fullQuery = `
           query {
             marketplaceJobPostingsSearch(
               marketPlaceJobFilter: {
-                titleExpression_eq: "${titleExpression}"
-                pagination_eq: { first: 50, after: "0" }
+                searchTerm_eq: {
+                  andTerms_all: "${searchTerm}"
+                }
+                pagination_eq: { first: 100, after: "${cursor}" }
               }
               searchType: USER_JOBS_SEARCH
               sortAttributes: [{ field: RECENCY }]
             ) {
+              totalCount
               edges {
                 node {
                   id
@@ -244,12 +255,11 @@ async function fetchJobsForSearch(
         };
 
         graphql.execute(params, (error: any, httpStatus: number, data: any) => {
-          console.log('GraphQL response - error:', error);
-          console.log('GraphQL response - httpStatus:', httpStatus);
-          console.log('GraphQL response - data:', JSON.stringify(data));
           if (error) {
+            console.error('GraphQL error:', error);
             reject(error);
           } else if (!data || !data.data) {
+            console.error('Invalid GraphQL response:', JSON.stringify(data));
             reject(new Error(`Invalid GraphQL response: ${JSON.stringify(data)}`));
           } else {
             resolve(data);
@@ -257,15 +267,36 @@ async function fetchJobsForSearch(
         });
       });
 
-    if (!response || !response.data || !response.data.marketplaceJobPostingsSearch) {
-      console.error('Invalid response structure:', JSON.stringify(response));
-      throw new Error('Invalid response from Upwork GraphQL API');
+      if (!response || !response.data || !response.data.marketplaceJobPostingsSearch) {
+        console.error('Invalid response structure:', JSON.stringify(response));
+        throw new Error('Invalid response from Upwork GraphQL API');
+      }
+
+      const searchData = response.data.marketplaceJobPostingsSearch;
+      const edges = searchData.edges || [];
+      const pageInfo = searchData.pageInfo || {};
+      const totalCount = searchData.totalCount || 0;
+
+      console.log(`  Page ${pageCount}: Got ${edges.length} jobs (totalCount: ${totalCount})`);
+
+      // Add jobs from this page
+      edges.forEach((edge: any) => {
+        if (edge.node) {
+          jobs.push(edge.node);
+        }
+      });
+
+      // Check if there are more pages
+      hasNextPage = pageInfo.hasNextPage && edges.length > 0;
+      cursor = pageInfo.endCursor || cursor;
+
+      // Safety: If no more results, stop
+      if (edges.length === 0) {
+        hasNextPage = false;
+      }
     }
 
-    const data: any = response.data.marketplaceJobPostingsSearch;
-    jobs.push(...data.edges.map((edge: any) => edge.node));
-
-    console.log(`Fetched ${jobs.length} jobs`);
+    console.log(`  ✓ Completed search for "${searchTerm}": ${jobs.length} total jobs from ${pageCount} pages`);
     return jobs;
   } catch (error) {
     console.error(`Failed to fetch jobs for "${searchTerm}":`, error);
