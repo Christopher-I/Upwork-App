@@ -20,14 +20,14 @@ export interface BonusResult {
 // ============================================
 
 export function calculateCustomBonus(
-  job: Job,
+  job: Partial<Job>,
   detectionResult: ReturnType<typeof detection.detectCustomApplication>
 ): BonusResult {
   if (!detectionResult.isDetected) {
     return { points: 0, label: '' };
   }
 
-  const text = `${job.title} ${job.description}`.toLowerCase();
+  const text = `${job.title || ''} ${job.description || ''}`.toLowerCase();
 
   // Context signals
   const hasOpenBudget = !job.budget || job.budget === 0 || job.budgetType === 'negotiable';
@@ -91,7 +91,7 @@ export function calculateCustomBonus(
 // ============================================
 
 export function calculateUSBasedBonus(
-  job: Job,
+  job: Partial<Job>,
   detectionResult: ReturnType<typeof detection.detectUSBased>
 ): BonusResult {
   if (!detectionResult.isDetected) {
@@ -127,7 +127,7 @@ export function calculateUSBasedBonus(
 // ============================================
 
 export function calculateDashboardBonus(
-  job: Job,
+  job: Partial<Job>,
   detectionResult: ReturnType<typeof detection.detectDashboard>
 ): BonusResult {
   if (!detectionResult.isDetected) {
@@ -148,7 +148,7 @@ export function calculateDashboardBonus(
 // ============================================
 
 export function calculateWebflowBonus(
-  job: Job,
+  job: Partial<Job>,
   detectionResult: ReturnType<typeof detection.detectWebflow>
 ): BonusResult {
   if (!detectionResult.isDetected) {
@@ -166,7 +166,7 @@ export function calculateWebflowBonus(
 // ============================================
 
 export function calculatePortalBonus(
-  job: Job,
+  job: Partial<Job>,
   detectionResult: ReturnType<typeof detection.detectPortal>
 ): BonusResult {
   if (!detectionResult.isDetected) {
@@ -194,7 +194,7 @@ export interface PerfectJobResult {
 }
 
 export function calculatePerfectJobMultiplier(
-  job: Job,
+  job: Partial<Job>,
   customDetected: boolean,
   usBasedDetected: boolean
 ): PerfectJobResult {
