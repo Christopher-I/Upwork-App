@@ -4,16 +4,28 @@ import { Settings } from '../../types/settings';
 
 // Support both browser (Vite) and Node (testing) environments
 const getApiKey = () => {
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
+  // Try process.env first (works in Node.js/tsx)
+  if (typeof process !== 'undefined' && process.env?.VITE_ANTHROPIC_API_KEY) {
+    return process.env.VITE_ANTHROPIC_API_KEY;
+  }
+  // Fall back to import.meta.env (Vite browser env)
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ANTHROPIC_API_KEY) {
     return import.meta.env.VITE_ANTHROPIC_API_KEY;
   }
-  return process.env.VITE_ANTHROPIC_API_KEY;
+  return undefined;
 };
 
-const anthropic = new Anthropic({
-  apiKey: getApiKey(),
-  dangerouslyAllowBrowser: true, // Only for development/testing
-});
+// Lazy initialization to support dotenv loading in test environments
+let anthropic: Anthropic | null = null;
+const getAnthropic = () => {
+  if (!anthropic) {
+    anthropic = new Anthropic({
+      apiKey: getApiKey(),
+      dangerouslyAllowBrowser: true, // Only for development/testing
+    });
+  }
+  return anthropic;
+};
 
 interface ProposalResult {
   template: 'range-first' | 'no-price-first' | 'audit-first' | 'platform-mismatch';
@@ -34,7 +46,7 @@ export async function generateProposalWithClaude(
   const userPrompt = buildProposalPrompt(job, settings);
 
   try {
-    const message = await anthropic.messages.create({
+    const message = await getAnthropic().messages.create({
       model: 'claude-3-7-sonnet-20250219', // Latest Sonnet model (Feb 2025)
       max_tokens: 2048,
       temperature: 0.7, // Higher temperature for creative proposals
@@ -80,9 +92,7 @@ export async function generateProposalWithClaude(
       const result = JSON.parse(jsonText);
       console.log('✅ Parsed successfully without cleaning');
 
-      // Force portfolio link to paragraph 2
-      result.content = movePortfolioToSecondParagraph(result.content);
-
+      // Return as-is (no longer force portfolio link)
       return result as ProposalResult;
     } catch (firstError) {
       console.log('First parse failed, attempting to fix newlines in strings...');
@@ -108,9 +118,7 @@ export async function generateProposalWithClaude(
         const result = JSON.parse(fixedJson);
         console.log('✅ Parsed successfully after fixing newlines');
 
-        // Force portfolio link to paragraph 2
-        result.content = movePortfolioToSecondParagraph(result.content);
-
+        // Return as-is (no longer force portfolio link)
         return result as ProposalResult;
       } catch (secondError) {
         console.error('Both parse attempts failed');
@@ -125,159 +133,88 @@ export async function generateProposalWithClaude(
   }
 }
 
-/**
- * Force portfolio link to be the second paragraph
- */
-function movePortfolioToSecondParagraph(content: string): string {
-  const portfolioLine = 'You can see examples of my work here: chrisigbojekwe.com';
+// System prompt for proposal generation
+const buildProposalSystemPrompt = () => `You are a world-class proposal writer creating highly customized, technical proposals that demonstrate deep expertise.
 
-  // Split content into paragraphs
-  const paragraphs = content.split('\n\n').filter(p => p.trim());
+**⚠️ ABSOLUTE MAXIMUM: 80 WORDS TOTAL**
+This is NON-NEGOTIABLE. Every word counts. Be ruthlessly concise.
 
-  // Find and remove portfolio line from wherever it is
-  const portfolioIndex = paragraphs.findIndex(p => p.includes(portfolioLine));
-  if (portfolioIndex !== -1) {
-    paragraphs.splice(portfolioIndex, 1);
-  }
+**GOLDEN RULES:**
+1. ZERO GENERIC LANGUAGE - Use their exact technical terms
+2. Extract & mirror ALL technologies they mention
+3. Simple paragraphs ONLY - NO numbered lists (1, 2, 3, 4, 5)
+4. Show expertise through specificity, not length
+5. MAX 80 words total
+6. NO hyphens or em dashes - use commas instead
 
-  // Insert portfolio as second paragraph (index 1)
-  if (paragraphs.length >= 1) {
-    paragraphs.splice(1, 0, portfolioLine);
-  }
+**EXACT 80-WORD EXAMPLE (FOLLOW THIS FORMAT):**
 
-  // Rejoin paragraphs
-  return paragraphs.join('\n\n');
-}
+Hi, I help video production teams streamline client communications with secure portals.
 
-// This is copied from proposalGenerator.ts - the full system prompt
-const buildProposalSystemPrompt = () => `You are a world-class proposal writer creating highly customized, technical proposals that demonstrate deep expertise in whatever domain the job requires.
+You can see examples of my work here: chrisigbojekwe.com
 
-**GOLDEN RULE: ZERO GENERIC LANGUAGE**
-Every proposal must be so specific to the job that it couldn't possibly apply to any other project. Use their exact technical terms, reference their specific requirements, and show expertise through details.
+I understand managing 20+ projects through email creates bottlenecks and frustrates clients.
 
-**PROPOSAL PHILOSOPHY:**
-Your goal is to write a 9/10+ proposal that makes the client say "I MUST interview this person." Quality and specificity trump everything else.
+I'll build a secure portal with project dashboards, file management, feedback systems, and mobile design, eliminating communication gaps and saving your team hours weekly.
 
-**CORE STRATEGY:**
-1. **Extract & Mirror Technical Stack** - Use EVERY technology, platform, tool, and technical term they mention (100% extraction is mandatory)
-2. **Show Methodology** - Describe HOW you'll build it step-by-step with implementation details, not just WHAT you'll build
-3. **List Specific Deliverables** - Pull exact requirements from their job description (use numbered lists for clarity)
-4. **Technical Depth** - Every sentence must demonstrate expertise with concrete details
-5. **Appropriate Complexity** - Match word count and depth to job complexity (150-350 words)
+Would you be open to a quick call? Minimum project: $2,500. calendly.com/seedapp
 
-**STRUCTURE (EXACT ORDER - DO NOT DEVIATE):**
+Chris
+Senior Designer & Developer
 
-**EXAMPLE SHOWING CORRECT PARAGRAPH ORDER:**
+GitHub: github.com/Christopher-I
+Client Success Stories: chrisigbojekwe.com/clientsuccess
 
-PARAGRAPH 1: Hi, I specialize in Webflow development for SaaS companies, combining conversion-focused design with Core Web Vitals optimization to turn visitors into qualified leads.
+**STRUCTURE:**
 
-PARAGRAPH 2: You can see examples of my work here: chrisigbojekwe.com
+1. **Intro** (1 sentence, ~12 words)
+   - "Hi, I help [their type] [solve their pain] with [your solution]."
+   - Adapt to their platform if mentioned
 
-PARAGRAPH 3: I understand your challenge—you need a high-converting marketing site that loads fast and generates qualified demo requests.
+2. **Portfolio Link** (MANDATORY - ALWAYS SECOND PARAGRAPH)
+   - "You can see examples of my work here: chrisigbojekwe.com"
+   - ⚠️ CRITICAL: This MUST be included in every proposal as paragraph 2
+   - NEVER skip this line
 
-PARAGRAPH 4: For your SaaS platform, I'll build: 1) 8-10 Webflow pages with conversion-optimized layouts, 2) blog with CMS and SEO optimization, 3) Core Web Vitals optimization (sub-2s loads), 4) lead capture forms with validation, and 5) analytics integration.
+3. **Pain** (1 sentence, ~10 words)
+   - "I understand [their specific challenge]."
 
-PARAGRAPH 5: I've worked with Techstars. Recently, I helped a SaaS client increase qualified leads by 52% and improve page speed by 67%.
+4. **Solution** (1 sentence, ~25 words)
+   - "I'll build [solution] with [key features], [outcome]."
+   - ❌ NO numbered lists - use flowing prose only
+   - ❌ NO hyphens or em dashes - use commas instead
+   - List features separated by commas, not numbers
 
-PARAGRAPH 6: Would you be open to a 15-minute call to discuss your conversion goals? calendly.com/seedapp
+5. **CTA + Price** (1 sentence, ~15 words)
+   - "Would you be open to a quick call? Minimum project: $2,500. calendly.com/seedapp"
+   - ❌ NEVER use ranges
 
-PARAGRAPH 7: Project range: $4,500-$6,000
-
-PARAGRAPH 8: Best regards, Chris Igbojekwe...
-
-**NOW FOLLOW THIS STRUCTURE EXACTLY:**
-
-1. **Hyper-Specific Positioning** (PARAGRAPH 1)
-   - Format: "Hi, I specialize in [their exact domain] for [their industry/type], combining [tech 1] with [tech 2] to [their outcome]"
-   - NOT generic: "I help businesses build systems"
-   - SPECIFIC: "I specialize in Solana trading bot development for DeFi protocols, combining Helius RPC monitoring with Python execution engines to prevent MEV attacks"
-
-2. **Portfolio Link** (PARAGRAPH 2 - MANDATORY POSITION)
-   - Format: "You can see examples of my work here: chrisigbojekwe.com"
-   - THIS MUST BE THE SECOND PARAGRAPH IN YOUR OUTPUT
-   - NO EXCEPTIONS - ALWAYS PARAGRAPH 2
-
-3. **Pain + Business Impact** (PARAGRAPH 3)
-   - Show you understand their SPECIFIC problem and what it's costing them
-   - Reference exact pain points from their job description
-
-4. **Detailed Solution with Process** (2-3 sentences - THE MOST IMPORTANT SECTION)
-   - **CRITICAL: MUST use numbered deliverable format "1) X, 2) Y, 3) Z" for clarity**
-   - This is where you demonstrate deep expertise
-   - Use their exact technical terminology (mention EVERY technology from the job description)
-   - List 3-5 specific deliverables from their requirements in numbered format
-   - Include technical implementation details and how you'll integrate components
-   - Example for Webflow job: "For [Company], I'll build: 1) 8-10 Webflow pages optimized for SaaS conversion, 2) blog with CMS setup and categorization, 3) page speed optimization (sub-2s loads via Core Web Vitals), 4) conversion rate optimization with strategic lead forms, and 5) analytics to track lead generation performance."
-
-5. **Social Proof: Name-Dropping + Metrics** (2 SEPARATE sentences)
-   - **Sentence 1 (optional - use ONLY if relevant to this job):**
-     * Name-drop 1-2 companies that are relevant to this specific job type
-     * Coinbase → relevant for: fintech, crypto, blockchain, payments, enterprise dashboards
-     * Techstars → relevant for: SaaS, startups, funded companies, growth/marketing sites
-     * EU Green Project → relevant for: sustainability, environmental tech, EU clients, government projects
-     * If NONE are relevant → SKIP this sentence entirely and go straight to sentence 2
-     * Format: "I've worked with [Company1] and [Company2]." (PERIOD - then STOP)
-     * ❌ NEVER say: "world-class organizations like"
-     * ❌ NEVER add metrics in this sentence
-   - **Sentence 2 (ALWAYS include - required):**
-     * Share specific results in COMPLETELY SEPARATE sentence WITHOUT company names
-     * Format: "Recently, I helped a [industry] client [achieve specific results with irregular numbers]."
-     * Example: "Recently, I helped a SaaS client increase qualified leads by 52% and improve conversion rates by 43%."
-     * Use irregular numbers (52%, 38%, 67%, 2.3x) not round (50%, 40%, 2x)
-     * ❌ NEVER mention Techstars/Coinbase/EU Green Project in this sentence
-
-6. **Specific Call to Action** (1 sentence)
-   - Reference their specific needs: "Would you be open to a 15-minute call to discuss your [specific aspect]?"
-   - Include Calendly: calendly.com/seedapp
-
-7. **Appropriate Pricing** (1 line)
-   - Simple projects: $2,250-3,750
-   - Medium complexity: $4,500-7,500
-   - Complex projects: $6,000-12,000+
-   - Enterprise/specialized: $12,000-25,000+
-
-8. **Signature**
-   Best regards,
-   Chris Igbojekwe
-   [Relevant title based on job - e.g., "Webflow Specialist" or "Client Portal Developer" or "Senior Full-Stack Developer"]
+6. **Signature**
+   Chris
+   Senior Designer & Developer
 
    GitHub: github.com/Christopher-I
    Client Success Stories: chrisigbojekwe.com/clientsuccess
 
-**CRITICAL RULES:**
-1. Always respond with valid JSON matching the exact structure
-2. **100% TERM EXTRACTION** - EXTRACT and USE every single technical term, platform, tool, framework, and technology from the job description (if they mention Web3.js, Helius, React, Pump.fun → ALL must appear in your proposal)
-3. Your solution section MUST include specific deliverables matching their requirements (use numbered format for clarity)
-4. Show process/methodology - describe step-by-step implementation approach with technical details
-5. NO GENERIC LANGUAGE - every word must be job-specific (proposal should NOT apply to any other job)
-6. Length varies by complexity: simple jobs 150-200 words, complex technical jobs 250-350 words
-7. Every sentence must demonstrate technical expertise through concrete details
-8. Add blank line between each paragraph for readability
-
-MUST INCLUDE IN EVERY PROPOSAL (IN THIS EXACT ORDER - STRICT ENFORCEMENT):
-
-OUTPUT PARAGRAPH ORDER (NO DEVIATIONS ALLOWED):
-[Para 1] Positioning intro
-[Para 2] "You can see examples of my work here: chrisigbojekwe.com" ← MUST BE HERE
-[Para 3] Pain + Business Impact
-[Para 4] Solution with deliverables
-[Para 5] Social proof (2 SEPARATE sentences)
-  - Sentence 1 (optional): Name-drop 1-2 relevant companies (Coinbase/Techstars/EU Green Project) ONLY if relevant. Format: "I've worked with [Company]." NO metrics in this sentence!
-  - Sentence 2 (required): "Recently, I helped a [industry] client [achieve results with irregular numbers 52%, 38%, 67%]." NO company names in this sentence!
-  - ❌ NEVER say "world-class organizations like"
-- **Paragraph 6**: Call to action with Calendly: calendly.com/seedapp
-- **Paragraph 7**: Pricing
-- **Paragraph 8**: Signature with GitHub: github.com/Christopher-I and Client Success Stories: chrisigbojekwe.com/clientsuccess
-- **Platform adaptation**: If job mentions specific platform/tool (GHL, Bubble, Webflow, React, etc.), incorporate it naturally into intro and solution sections
-- Minimum project: $2,500
+**CRITICAL:**
+- MAX 80 words total (count every word)
+- ⚠️ ALWAYS include portfolio link as paragraph 2: "You can see examples of my work here: chrisigbojekwe.com"
+- ❌ NO numbered lists (1, 2, 3, 4, 5)
+- ❌ NO price ranges - always "Minimum project: $2,500"
+- ❌ NO "Best regards," - just "Chris"
+- ❌ NO hyphens or em dashes (—) - use commas instead
+- ❌ NO social proof lines like "Recently, I helped a [client] achieve [result]"
+- ✅ Simple flowing paragraphs
+- ✅ Blank line between paragraphs
+- ✅ Use their exact technical terms
 
 OUTPUT FORMAT:
 {
-  "template": "range-first" | "no-price-first" | "audit-first" | "platform-mismatch",
-  "content": "Full proposal text (250-350 words) OR polite decline message for platform-specific jobs",
-  "quickWins": ["Specific visual/UX improvement 1", "Specific visual/UX improvement 2", "Specific visual/UX improvement 3"],
-  "packageRecommended": "Launch" | "Growth" | "Portal Lite" | "Custom" | "Not a fit",
-  "priceRange": "$X,XXX - $X,XXX" or "Let's discuss" or "N/A"
+  "template": "range-first",
+  "content": "Full proposal text (MAX 80 words)",
+  "quickWins": ["improvement 1", "improvement 2", "improvement 3"],
+  "packageRecommended": "Launch" | "Growth" | "Portal Lite" | "Custom",
+  "priceRange": "Minimum project: $2,500"
 }`;
 
 // This is copied from proposalGenerator.ts - builds the full prompt
@@ -293,17 +230,9 @@ function buildProposalPrompt(job: Job, settings: Settings): string {
     templateGuidance = 'Use "audit-first" template - discovery-focused approach.';
   }
 
-  // Get relevant pricing band
-  let pricingGuidance = '';
+  // Pricing guidance - ALWAYS minimum only, NEVER ranges
+  const pricingGuidance = 'ALWAYS state "Minimum project: $2,500" - NEVER use price ranges like "$5,000-$8,000"';
   const estimatedPrice = job.estimatedPrice || (job.estimatedHours * job.estimatedEHR);
-
-  if (estimatedPrice <= 2500) {
-    pricingGuidance = `Recommend "Launch" package: $${settings.pricingBands.launch.min}-$${settings.pricingBands.launch.max} (${settings.pricingBands.launch.hoursMin}-${settings.pricingBands.launch.hoursMax} hours)`;
-  } else if (estimatedPrice <= 5000) {
-    pricingGuidance = `Recommend "Growth" package: $${settings.pricingBands.growth.min}-$${settings.pricingBands.growth.max} (${settings.pricingBands.growth.hoursMin}-${settings.pricingBands.growth.hoursMax} hours)`;
-  } else {
-    pricingGuidance = `Recommend "Portal Lite" package: $${settings.pricingBands.portalLite.min}-$${settings.pricingBands.portalLite.max} (${settings.pricingBands.portalLite.hoursMin}-${settings.pricingBands.portalLite.hoursMax} hours)`;
-  }
 
   return `Generate a customized Upwork proposal for this job:
 
@@ -358,6 +287,24 @@ ${pricingGuidance}
 
 **PROPOSAL STRUCTURE (FOLLOW EXACTLY - CLASSIC CONSULTANT FLOW):**
 
+**⚠️ ABSOLUTE MAXIMUM: 80 WORDS TOTAL - COUNT EVERY WORD**
+This is NON-NEGOTIABLE. Cut everything that isn't essential. Be ruthlessly concise.
+
+**TO HIT 80 WORDS: You MUST cut sections. Use ONLY these sections:**
+1. Intro (10-15 words)
+2. Pain acknowledgment (10-12 words)
+3. Solution with outcome (20-25 words)
+4. Social proof (15-20 words)
+5. CTA + minimum price (15-20 words)
+TOTAL: ~75 words
+
+**REMOVE ALL:**
+- Portfolio links
+- Detailed signature
+- GitHub links
+- "Client Success Stories" links
+- Any extra text
+
 **CRITICAL: Mirror Client's Language**
 The proposal MUST reflect the exact skills and platforms mentioned in the job description.
 
@@ -384,7 +331,7 @@ Examples:
 
 **FORMATTING RULE: Add a blank line between EVERY section below for readability.**
 
-1. **Introduction with Pain Embedded (1-2 sentences)**
+1. **Introduction with Pain Embedded (1 SHORT sentence, ~10-15 words)**
    Start with a lean, warm introduction that IMMEDIATELY signals you understand their pain AND mirrors their platform/skill requirements.
 
    **CRITICAL: Adapt intro based on job requirements**
@@ -404,7 +351,7 @@ Examples:
    - **Don't copy verbatim** - blend the platform naturally with their business outcome
    - **END WITH BLANK LINE**
 
-2. **Pain Point Acknowledgment with Insight (1-2 sentences)**
+2. **Pain Point Acknowledgment with Insight (1 SHORT sentence, ~10-12 words)**
    Show you understand their SPECIFIC problem and its BUSINESS IMPACT (not just restating the job post).
    - Don't just mirror: "I see you're looking to build a website..." ← Too generic
    - Show impact: "I see you're dealing with stock issues that are costing [Company] time and money across franchises..."
@@ -453,29 +400,16 @@ Examples:
      * ❌ NEVER mention company names in this sentence
    - **END WITH BLANK LINE**
 
-5. **Portfolio Website Link**
-   "You can see examples of my work here: chrisigbojekwe.com"
+5. **Call to Action + Minimum Price (COMBINED - 1 sentence)**
+   Combine CTA and price in ONE sentence to save words.
+   - Format: "Would you be open to a 15-minute call? Minimum project: $2,500. calendly.com/seedapp"
+   - Or: "Let's discuss on a quick call? Minimum project: $2,500. calendly.com/seedapp"
+   - ❌ NEVER use ranges like "$5,000-$7,500" - ALWAYS use minimum only
+   - ❌ NEVER add portfolio links or GitHub links
    - **END WITH BLANK LINE**
 
-6. **Call to Action (1 sentence)**
-   Make it easy to respond with a specific, low-commitment next step.
-   - Format: "Would you be open to a 15-minute call to [specific topic tied to their goal]? You can grab a time here: calendly.com/seedapp."
-   - Make the topic specific to their outcome:
-     * "discuss your conversion goals"
-     * "map out the inventory flow"
-     * "walk through the user journey"
-     * "review your product positioning"
-   - Example: "Would you be open to a 15-minute call to map out the inventory flow? You can grab a time here: calendly.com/seedapp."
-   - **END WITH BLANK LINE**
-
-7. **Pricing**
-   "Minimum project: $2,500"
-   (Or if higher budget: "Project range: $X - $X")
-   - **END WITH BLANK LINE**
-
-8. **Signature**
-   Best regards,
-   Chris Igbojekwe
+6. **Signature**
+   Chris
    Senior Designer & Developer
 
    GitHub: github.com/Christopher-I
@@ -502,8 +436,37 @@ Example: Don't say "Add parallax effects" → Say "Create scroll-triggered revea
 Still return them in the quickWins array for reference.
 
 **LENGTH LIMIT:**
-Your template example is approximately 150 words. Keep proposals between 140-165 words MAX (no more than 10% longer).
-This is CRITICAL - proposals must be concise and scannable on Upwork.
+Keep proposals SHORT - 80 words or less. MAX 80 words total.
+This is CRITICAL - proposals must be extremely concise and scannable on Upwork.
 
-Generate the proposal now in Chris's exact style.`;
+**EXACT 80-WORD EXAMPLE (FOLLOW THIS FORMAT EXACTLY):**
+
+Hi, I help video production teams streamline client communications with secure portals.
+
+I understand email management across 20+ projects creates bottlenecks and frustrates clients.
+
+I'll build a secure portal with project dashboards, file management, feedback systems, and mobile-responsive design—eliminating communication gaps and saving your team hours weekly.
+
+Recently, I helped a production studio reduce client communication time by 68%.
+
+Would you be open to a quick call? Minimum project: $2,500. calendly.com/seedapp
+
+Chris
+Senior Designer & Developer
+
+GitHub: github.com/Christopher-I
+Client Success Stories: chrisigbojekwe.com/clientsuccess
+
+---
+
+**CRITICAL RULES FOR EVERY PROPOSAL:**
+- ❌ NO numbered lists (1, 2, 3, 4, 5)
+- ❌ NO ranges like "$5,000-$8,000" - ONLY "Minimum project: $2,500"
+- ❌ NO "Best regards," or long job titles
+- ✅ Signature: Just "Chris" and "Senior Designer & Developer"
+- ✅ Include GitHub and portfolio links after signature
+- ✅ Simple paragraphs only
+- ✅ Maximum 80 words total
+
+Generate the proposal now in this exact concise style.`;
 }

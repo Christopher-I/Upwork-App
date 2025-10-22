@@ -16,6 +16,41 @@ export function JobCard({ job, onClick, viewMode }: JobCardProps) {
   const hasHighMarketRate = (job.estimatedPrice || 0) >= 5000;
   const isProfessional = hasOpenBudget && hasTeamLanguage && hasHighMarketRate;
 
+  // Custom work badge - show if custom work detected
+  const customAnalysis = (job as any).customAnalysis;
+  const isCustomWork = customAnalysis?.isCustomWork;
+  const getCustomBadgeText = () => {
+    if (!isCustomWork) return null;
+
+    const { hasOpenBudget, hasSkillMatch, tier } = customAnalysis;
+
+    if (tier === 1) return 'Custom app • Open budget • Skills match';
+    if (tier === 2 && hasOpenBudget) return 'Custom app • Open budget';
+    if (tier === 2 && hasSkillMatch) return 'Custom app • Skills match';
+    if (tier === 3) return 'Custom work • Good fit';
+    return 'Custom work';
+  };
+
+  // US-based badge - show if US-based detected
+  const usBasedAnalysis = (job as any).usBasedAnalysis;
+  const isUSBased = usBasedAnalysis?.isUSBased;
+  const getUSBasedBadgeText = () => {
+    if (!isUSBased) return null;
+
+    const { timeZone, tier } = usBasedAnalysis;
+
+    if (tier === 1 && timeZone) {
+      return `US-based • ${timeZone}`;
+    }
+    return 'US preferred';
+  };
+
+  // Perfect job styling
+  const isPerfectJob = (job as any).isPerfectJob;
+  const cardClassName = isPerfectJob
+    ? "bg-green-50 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer p-4 border border-green-300 hover:border-green-400 hover:-translate-y-0.5"
+    : "bg-white rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer p-4 border border-gray-200 hover:border-gray-300 hover:-translate-y-0.5";
+
   const scoreColor = job.score >= 90 ? 'success' : job.score >= 80 ? 'primary' : 'gray';
   const scoreColorClass =
     scoreColor === 'success' ? 'bg-success-50 text-success-700 border-success-200' :
@@ -25,8 +60,16 @@ export function JobCard({ job, onClick, viewMode }: JobCardProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer p-4 border border-gray-200 hover:border-gray-300 hover:-translate-y-0.5"
+      className={cardClassName}
     >
+      {/* Perfect job badge - Show at top if applicable */}
+      {isPerfectJob && (
+        <div className="flex items-center gap-2 text-xs font-semibold text-green-700 mb-2 bg-green-100 px-3 py-1.5 rounded-md border border-green-300">
+          <span>🎯</span>
+          <span>PERFECT JOB: Custom app • US-based • Open budget</span>
+        </div>
+      )}
+
       {/* Job Title - HERO element */}
       <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 text-lg leading-snug">
         {job.title}
@@ -96,9 +139,31 @@ export function JobCard({ job, onClick, viewMode }: JobCardProps) {
         </div>
       )}
 
+      {/* Custom work badge - Show if custom application detected */}
+      {isCustomWork && getCustomBadgeText() && (
+        <div className="flex items-center gap-2 text-xs text-purple-600 mb-3">
+          <span>✨</span>
+          <span>{getCustomBadgeText()}</span>
+        </div>
+      )}
+
+      {/* US-based badge - Show if US-based detected */}
+      {isUSBased && getUSBasedBadgeText() && (
+        <div className="flex items-center gap-2 text-xs text-blue-600 mb-3">
+          <span>📍</span>
+          <span>{getUSBasedBadgeText()}</span>
+        </div>
+      )}
+
       {/* Status badges (if applicable) */}
-      {(job.proposal || job.applied || job.won) && (
+      {(job.proposal || job.applied || job.won || job.archived) && (
         <div className="pt-3 border-t border-gray-100 flex items-center gap-2 flex-wrap">
+          {job.archived && job.archiveReason && (
+            <span className="text-xs text-gray-600 font-medium">
+              Archived: {job.archiveReason === 'position_filled' ? 'Position filled' : 'Job irrelevant'}
+              {job.archivedAt && ` • ${getTimeAgo(job.archivedAt)}`}
+            </span>
+          )}
           {job.proposal && (
             <span className="text-xs text-success-600 font-medium">
               Proposal ready

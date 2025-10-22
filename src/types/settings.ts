@@ -105,6 +105,8 @@ export const DEFAULT_SETTINGS: Settings = {
       'member portal',
       'membership site',
       'dashboard',
+      'admin dashboard',
+      'analytics dashboard',
     ],
     ecommerce: [
       'checkout optimization',
@@ -130,6 +132,8 @@ export const DEFAULT_SETTINGS: Settings = {
       'app development',
       'custom app',
       'mobile app',
+      'custom application',
+      'custom platform',
     ],
   },
 

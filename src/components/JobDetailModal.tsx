@@ -6,6 +6,7 @@ import { generateProposal, generateProposalWithClaude, answerClientQuestion } fr
 import { AI_PROVIDER } from '../config/ai';
 import { useSettings } from '../hooks/useSettings';
 import { PricingRecommendation } from './PricingRecommendation';
+import { ArchiveModal } from './ArchiveModal';
 import * as jobService from '../services/jobService';
 
 interface JobDetailModalProps {
@@ -25,6 +26,9 @@ export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) 
   const [clientQuestion, setClientQuestion] = useState('');
   const [generatedAnswer, setGeneratedAnswer] = useState('');
   const [isGeneratingAnswer, setIsGeneratingAnswer] = useState(false);
+
+  // Archive modal state
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
 
   // Real-time listener for job updates
   useEffect(() => {
@@ -173,6 +177,27 @@ export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) 
     } catch (error) {
       console.error('Failed to toggle recommendation:', error);
       alert('❌ Failed to update job status.');
+    }
+  };
+
+  const handleArchive = async (reason: 'position_filled' | 'job_irrelevant') => {
+    try {
+      await jobService.archiveJob(currentJob.id, reason);
+      alert('✅ Job archived!');
+      onClose(); // Close modal after archiving
+    } catch (error) {
+      console.error('Failed to archive job:', error);
+      alert('❌ Failed to archive job.');
+    }
+  };
+
+  const handleUnarchive = async () => {
+    try {
+      await jobService.unarchiveJob(currentJob.id);
+      alert('✅ Job unarchived!');
+    } catch (error) {
+      console.error('Failed to unarchive job:', error);
+      alert('❌ Failed to unarchive job.');
     }
   };
 
@@ -430,6 +455,84 @@ export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) 
                 />
               )}
             </div>
+
+            {/* Custom Application Details */}
+            {(currentJob as any).customAnalysis?.isCustomWork && (
+              <div className="mt-4 bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">✨</span>
+                  <div>
+                    <div className="font-semibold text-purple-900">Custom Application Detected</div>
+                    <div className="text-sm text-purple-700">
+                      Your #1 highest-value specialty
+                    </div>
+                  </div>
+                </div>
+                <div className="text-sm text-purple-800 space-y-1 ml-8">
+                  <div>
+                    <span className="font-medium">Confidence:</span>{' '}
+                    {(currentJob as any).customAnalysis.confidenceLevel === 'high' ? 'High' : 'Medium'} (Tier {(currentJob as any).customAnalysis.tier})
+                  </div>
+                  <div>
+                    <span className="font-medium">Bonus awarded:</span> +{(currentJob as any).customAnalysis.bonusAwarded} points
+                  </div>
+                  <div>
+                    <span className="font-medium">Context:</span> {(currentJob as any).customAnalysis.tierLabel}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* US-Based Details */}
+            {(currentJob as any).usBasedAnalysis?.isUSBased && (
+              <div className="mt-4 bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">📍</span>
+                  <div>
+                    <div className="font-semibold text-blue-900">US-Based Freelancer Preferred</div>
+                    <div className="text-sm text-blue-700">
+                      Huge competitive advantage - less competition, better rates
+                    </div>
+                  </div>
+                </div>
+                <div className="text-sm text-blue-800 space-y-1 ml-8">
+                  <div>
+                    <span className="font-medium">Confidence:</span>{' '}
+                    {(currentJob as any).usBasedAnalysis.confidenceLevel === 'high' ? 'High' : 'Medium'} (Tier {(currentJob as any).usBasedAnalysis.tier})
+                  </div>
+                  <div>
+                    <span className="font-medium">Bonus awarded:</span> +{(currentJob as any).usBasedAnalysis.bonusAwarded} points
+                  </div>
+                  {(currentJob as any).usBasedAnalysis.timeZoneMentioned && (
+                    <div>
+                      <span className="font-medium">Time zone:</span> {(currentJob as any).usBasedAnalysis.timeZone}
+                    </div>
+                  )}
+                  <div className="text-xs mt-2 text-blue-600">
+                    Detected patterns: {(currentJob as any).usBasedAnalysis.detectedPatterns.slice(0, 3).join(', ')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Perfect Job Indicator */}
+            {(currentJob as any).isPerfectJob && (
+              <div className="mt-4 bg-green-50 rounded-lg p-4 border border-green-300">
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl">🎯</span>
+                  <div>
+                    <div className="font-bold text-green-900 text-lg">PERFECT JOB</div>
+                    <div className="text-sm text-green-700">
+                      Custom application + US-based + Open budget = 1.15× multiplier
+                    </div>
+                    <div className="text-xs text-green-600 mt-1">
+                      Internal score: {((currentJob as any).internalScore || 0).toFixed(1)}
+                      {' '}(capped at 100 for display)
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           )}
 
@@ -649,7 +752,7 @@ export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) 
 
           {/* Actions */}
           <div className="border-t border-gray-200 pt-6 flex gap-3 flex-wrap">
-            {!currentJob.applied && (
+            {!currentJob.applied && !currentJob.archived && (
               <button
                 onClick={handleMarkAsApplied}
                 className="px-3 py-2 sm:px-5 sm:py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
@@ -663,6 +766,23 @@ export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) 
                 className="px-3 py-2 sm:px-5 sm:py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 font-medium text-sm transition-colors"
               >
                 Mark as Won
+              </button>
+            )}
+
+            {/* Archive/Unarchive Button */}
+            {currentJob.archived ? (
+              <button
+                onClick={handleUnarchive}
+                className="px-3 py-2 sm:px-5 sm:py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium text-sm transition-colors"
+              >
+                Unarchive
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowArchiveModal(true)}
+                className="px-3 py-2 sm:px-5 sm:py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors border border-gray-200"
+              >
+                Archive
               </button>
             )}
 
@@ -687,8 +807,25 @@ export function JobDetailModal({ job, onClose, viewMode }: JobDetailModalProps) 
               Close
             </button>
           </div>
+
+          {/* Show disabled "Mark as Applied" if archived */}
+          {currentJob.archived && !currentJob.applied && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-4">
+              <p className="text-sm text-gray-600">
+                This job is archived. Unarchive it to apply.
+              </p>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Archive Modal */}
+      <ArchiveModal
+        isOpen={showArchiveModal}
+        onClose={() => setShowArchiveModal(false)}
+        onArchive={handleArchive}
+        jobTitle={currentJob.title}
+      />
     </div>
   );
 }

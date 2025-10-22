@@ -18,6 +18,8 @@ type ProposalResult = Record<string, any>;
  * - markJobAsWon()         - Mark job as won (tracks stats, revenue)
  * - toggleRecommendation() - Manually override job recommendation
  * - saveProposal()         - Save generated proposal to job
+ * - archiveJob()           - Archive job with reason
+ * - unarchiveJob()         - Restore archived job
  * - updateJobField()       - Generic field update utility
  * ═══════════════════════════════════════════════════════════════════════════
  */
@@ -145,6 +147,56 @@ export async function saveProposal(
   } catch (error) {
     console.error('Failed to save proposal:', error);
     throw new Error('Failed to save proposal');
+  }
+}
+
+/**
+ * Archive a job with a reason
+ *
+ * @param jobId - Firestore document ID
+ * @param reason - Why the job is being archived
+ * @throws Error if update fails
+ */
+export async function archiveJob(
+  jobId: string,
+  reason: 'position_filled' | 'job_irrelevant'
+): Promise<void> {
+  try {
+    console.log(`📦 Archiving job ${jobId} (Reason: ${reason})...`);
+
+    await updateDoc(doc(db, 'jobs', jobId), {
+      archived: true,
+      archivedAt: new Date(),
+      archiveReason: reason,
+    });
+
+    console.log(`✅ Job ${jobId} archived`);
+  } catch (error) {
+    console.error('Failed to archive job:', error);
+    throw new Error('Failed to archive job');
+  }
+}
+
+/**
+ * Unarchive a job (restore to active)
+ *
+ * @param jobId - Firestore document ID
+ * @throws Error if update fails
+ */
+export async function unarchiveJob(jobId: string): Promise<void> {
+  try {
+    console.log(`📤 Unarchiving job ${jobId}...`);
+
+    await updateDoc(doc(db, 'jobs', jobId), {
+      archived: false,
+      archivedAt: null,
+      archiveReason: null,
+    });
+
+    console.log(`✅ Job ${jobId} unarchived`);
+  } catch (error) {
+    console.error('Failed to unarchive job:', error);
+    throw new Error('Failed to unarchive job');
   }
 }
 

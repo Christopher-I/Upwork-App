@@ -4,6 +4,8 @@ import { scoreJobWithChatGPT } from '../lib/openai';
 import { scoreJobWithClaude } from '../lib/claude';
 import { AI_PROVIDER } from '../config/ai';
 import { detectJobTags } from './tagDetection';
+import * as detection from './jobDetection';
+import * as bonuses from './scoringBonuses';
 
 // Import recommendation filter logic from dedicated file
 export { applyRecommendationFilters as applyHardFilters, checkStarCriteria } from './recommendationFilters';
@@ -83,7 +85,7 @@ export async function calculateJobScore(
   (job as any).tags = tags;
   console.log(`🏷️  Detected ${tags.length} tags: ${tags.slice(0, 5).join(', ')}${tags.length > 5 ? '...' : ''}`);
 
-  const total =
+  let total =
     breakdown.clientQuality.subtotal +
     breakdown.keywordsMatch +
     breakdown.professionalSignals.subtotal +
@@ -91,6 +93,33 @@ export async function calculateJobScore(
     breakdown.jobClarity +
     breakdown.ehrPotential +
     breakdown.redFlags;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PERFECT JOB MULTIPLIER - Boost scores for ideal job combinations
+  // ═══════════════════════════════════════════════════════════════════════════
+  const perfectJobResult = bonuses.calculatePerfectJobMultiplier(
+    job as Job,
+    !!(job as any).customAnalysis?.isCustomWork,
+    !!(job as any).usBasedAnalysis?.isUSBased
+  );
+
+  if (perfectJobResult.isPerfectJob) {
+    const multipliedScore = total * perfectJobResult.multiplier;
+    console.log(`   🎯 PERFECT JOB MULTIPLIER: ${total} × ${perfectJobResult.multiplier} = ${multipliedScore.toFixed(1)}`);
+
+    // Store internal score for ranking (uncapped)
+    (job as any).internalScore = multipliedScore;
+
+    // Store perfect job flag
+    (job as any).isPerfectJob = true;
+
+    // Cap display score at 100
+    total = Math.min(multipliedScore, 100);
+  } else {
+    // Non-perfect jobs use regular score
+    (job as any).internalScore = total;
+    (job as any).isPerfectJob = false;
+  }
 
   return {
     total: Math.max(0, Math.min(100, total)), // Clamp between 0-100
@@ -236,26 +265,76 @@ export function scoreKeywordsMatch(
   let score = Math.min(matchCount * 5, 15);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // SPECIALTY BONUSES - Prioritize jobs matching our core expertise
+  // SPECIALTY BONUSES (MODULAR) - Prioritize jobs matching our core expertise
+  // Ordered by earning potential: Custom Apps > US-Based > Webflow > Dashboard > Portals
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // Webflow bonus (+10 points - our #1 specialty)
-  if (text.includes('webflow') || text.includes('web flow')) {
-    const bonusAmount = 10;
-    score = Math.min(score + bonusAmount, 15); // Add bonus but cap at keyword max
-    matchedKeywords.push('✨ WEBFLOW (YOUR #1 SPECIALTY - PRIORITY)');
-    console.log(`   +${bonusAmount} points: Webflow specialty bonus`);
+  // 1. Custom Application Bonus (+12 max - YOUR #1 HIGHEST-VALUE WORK)
+  const customDetection = detection.detectCustomApplication(text);
+  const customBonus = bonuses.calculateCustomBonus(job, customDetection);
+  if (customBonus.points > 0) {
+    score = Math.min(score + customBonus.points, 15);
+    matchedKeywords.push(customBonus.label);
+    console.log(`   +${customBonus.points} points: ${customBonus.label} (Tier ${customBonus.tier}: ${customBonus.metadata?.tierLabel})`);
+
+    // Store analysis for badge display
+    (job as any).customAnalysis = {
+      isCustomWork: true,
+      ...customBonus.metadata,
+      bonusAwarded: customBonus.points,
+      tier: customBonus.tier,
+    };
   }
 
-  // Portal bonus (+5 points - our #2 specialty)
-  const portalKeywords = ['portal', 'member area', 'membership', 'dashboard', 'member site'];
-  const hasPortalKeyword = portalKeywords.some((kw) => text.includes(kw));
+  // 2. US-Based Bonus (+11 max - HUGE COMPETITIVE ADVANTAGE)
+  const usBasedDetection = detection.detectUSBased(text);
+  const usBasedBonus = bonuses.calculateUSBasedBonus(job, usBasedDetection);
+  if (usBasedBonus.points > 0) {
+    score = Math.min(score + usBasedBonus.points, 15);
+    matchedKeywords.push(usBasedBonus.label);
+    console.log(`   +${usBasedBonus.metadata?.baseBonus} points: US-based (Tier ${usBasedBonus.tier})`);
+    console.log(`   +${usBasedBonus.metadata?.amplifierBonus} points: US-based AMPLIFIER (huge competitive advantage)`);
+    if (usBasedBonus.metadata?.timeZoneMentioned) {
+      console.log(`   ⏰ Time zone mentioned: ${usBasedBonus.metadata?.timeZone}`);
+    }
 
-  if (hasPortalKeyword) {
-    const bonusAmount = 5;
-    score = Math.min(score + bonusAmount, 15); // Add bonus but cap at keyword max
-    matchedKeywords.push('✨ PORTAL (YOUR #2 SPECIALTY)');
-    console.log(`   +${bonusAmount} points: Portal specialty bonus`);
+    // Store analysis for badge display
+    (job as any).usBasedAnalysis = {
+      isUSBased: true,
+      confidenceLevel: usBasedDetection.confidence,
+      detectedPatterns: usBasedDetection.patterns,
+      timeZoneMentioned: usBasedBonus.metadata?.timeZoneMentioned,
+      timeZone: usBasedBonus.metadata?.timeZone,
+      bonusAwarded: usBasedBonus.points,
+      tier: usBasedBonus.tier,
+    };
+  }
+
+  // 3. Dashboard Bonus (+7 - HIGH-VALUE CLIENTS)
+  const dashboardDetection = detection.detectDashboard(text);
+  const dashboardBonus = bonuses.calculateDashboardBonus(job, dashboardDetection);
+  if (dashboardBonus.points > 0) {
+    score = Math.min(score + dashboardBonus.points, 15);
+    matchedKeywords.push(dashboardBonus.label);
+    console.log(`   +${dashboardBonus.points} points: ${dashboardBonus.label}`);
+  }
+
+  // 4. Webflow Bonus (+8 - YOUR #2 SPECIALTY)
+  const webflowDetection = detection.detectWebflow(text);
+  const webflowBonus = bonuses.calculateWebflowBonus(job, webflowDetection);
+  if (webflowBonus.points > 0) {
+    score = Math.min(score + webflowBonus.points, 15);
+    matchedKeywords.push(webflowBonus.label);
+    console.log(`   +${webflowBonus.points} points: ${webflowBonus.label}`);
+  }
+
+  // 5. Portal Bonus (+5 - YOUR #3 SPECIALTY)
+  const portalDetection = detection.detectPortal(text);
+  const portalBonus = bonuses.calculatePortalBonus(job, portalDetection);
+  if (portalBonus.points > 0) {
+    score = Math.min(score + portalBonus.points, 15);
+    matchedKeywords.push(portalBonus.label);
+    console.log(`   +${portalBonus.points} points: ${portalBonus.label}`);
   }
 
   return Math.round(score);

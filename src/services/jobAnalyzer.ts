@@ -6,6 +6,7 @@
 import { JobAnalysisInput, JobPricingRecommendation } from '../types/jobAnalyzer';
 import { detectJobTags } from '../utils/tagDetection';
 import { calculatePricingRecommendation } from '../utils/pricingCalculator';
+import { scoreJobWithClaude } from '../lib/claude';
 
 /**
  * Detect project duration from description
@@ -228,11 +229,32 @@ export function generatePricingReasoning(
 /**
  * Main function: Analyze pricing for a job
  */
-export function analyzePricing(input: JobAnalysisInput): JobPricingRecommendation {
+export async function analyzePricing(input: JobAnalysisInput): Promise<JobPricingRecommendation> {
   // Extract metadata from description
   const metadata = extractJobMetadata(input.description);
 
-  // Create a pseudo-job object for the pricing calculator
+  // STEP 1: Call AI to get realistic pricing estimate
+  let aiPricing;
+  try {
+    console.log('🤖 Calling AI for pricing estimate...');
+
+    aiPricing = await scoreJobWithClaude(
+      input.description.split('\n')[0].substring(0, 100), // Extract title from first line
+      input.description,
+      input.budgetMin || 0,
+      input.budgetType,
+      input.budgetType === 'hourly' ? input.budgetMin : undefined,
+      input.budgetType === 'hourly' ? input.budgetMax : undefined
+    );
+
+    console.log(`✅ AI estimate: $${aiPricing.ehrPotential.estimatedPrice} (${aiPricing.ehrPotential.estimatedHours} hours)`);
+  } catch (error) {
+    console.error('❌ AI pricing failed, using fallback:', error);
+    // If AI fails, we'll use metadata-based estimates below
+    aiPricing = null;
+  }
+
+  // STEP 2: Create a pseudo-job object for the pricing calculator
   const pseudoJob = {
     id: 'analyzer-' + Date.now(),
     title: input.description.split('\n')[0].substring(0, 100),
@@ -246,16 +268,35 @@ export function analyzePricing(input: JobAnalysisInput): JobPricingRecommendatio
     duration: input.duration || metadata.duration,
     proposalsCount: 0,
     tags: metadata.tags,
+
+    // ✅ USE AI PRICING if available
+    estimatedPrice: aiPricing ? aiPricing.ehrPotential.estimatedPrice : (metadata.complexity * 5000), // Fallback: complexity * $5K
+    estimatedHours: aiPricing ? aiPricing.ehrPotential.estimatedHours : estimateHours(input.description, metadata.complexity),
+    estimatedEHR: aiPricing ? aiPricing.ehrPotential.estimatedEHR : 75,
+
+    score: 85, // High score for analyzer (we're analyzing it, so assume it's good)
+    scoreBreakdown: {
+      clientQuality: { subtotal: 20 },
+      keywordsMatch: 10,
+      professionalSignals: { subtotal: 10, weLanguage: 5 },
+      businessImpact: 15,
+      jobClarity: metadata.scopeClarity >= 7 ? 15 : 10,
+      ehrPotential: 15,
+      redFlags: 0,
+    },
+
     client: {
       name: input.clientName || 'Client',
       paymentVerified: true,
       totalSpent: 10000,
       totalHires: 5,
       location: 'United States',
+      rating: 4.5,
+      reviewCount: 10,
     },
   } as any;
 
-  // Use existing pricing calculator
+  // STEP 3: Use existing pricing calculator
   const pricingRec = calculatePricingRecommendation(pseudoJob);
 
   // Estimate hours
@@ -281,8 +322,9 @@ export function analyzePricing(input: JobAnalysisInput): JobPricingRecommendatio
       recommendation.recommendedRate = pricingRec.data.recommendedRate;
       recommendation.minRate = pricingRec.data.rateRange.min;
       recommendation.maxRate = pricingRec.data.rateRange.max;
-    } else {
-      // Fallback defaults
+    } else if (pricingRec.type === 'error') {
+      // AI failed and no estimatedPrice - use basic fallback
+      console.warn('⚠️ Pricing calculation failed, using basic estimates');
       recommendation.recommendedRate = 75;
       recommendation.minRate = 60;
       recommendation.maxRate = 90;
@@ -296,8 +338,9 @@ export function analyzePricing(input: JobAnalysisInput): JobPricingRecommendatio
         recommendation.minRate = Math.round(rate * 0.8);
         recommendation.maxRate = Math.round(rate * 1.2);
       }
-    } else {
-      // Fallback defaults
+    } else if (pricingRec.type === 'error') {
+      // AI failed and no estimatedPrice - use basic fallback
+      console.warn('⚠️ Pricing calculation failed, using basic estimates');
       recommendation.recommendedPrice = estimatedHours * 75;
       recommendation.minRate = 60;
       recommendation.maxRate = 90;

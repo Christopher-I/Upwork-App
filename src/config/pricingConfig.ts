@@ -55,6 +55,7 @@ export const PRICING_CONFIG = {
    * - With 0.9 multiplier: $9,000
    * - With 1.0 multiplier: $10,000
    * - With 1.1 multiplier: $11,000
+   *
    */
   FAIR_MARKET_VALUE_MULTIPLIER: 0.9,
 

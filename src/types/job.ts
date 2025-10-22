@@ -116,6 +116,37 @@ export interface Job {
   appliedAt?: Date;
   appliedProposal?: string;
 
+  // Archive tracking
+  archived: boolean;
+  archivedAt?: Date;
+  archiveReason?: 'position_filled' | 'job_irrelevant';
+
+  // Custom application analysis
+  customAnalysis?: {
+    isCustomWork: boolean;
+    confidenceLevel: 'high' | 'medium';
+    hasOpenBudget: boolean;
+    hasSkillMatch: boolean;
+    bonusAwarded: number;
+    tier: number;
+    tierLabel?: string;
+  };
+
+  // US-based analysis
+  usBasedAnalysis?: {
+    isUSBased: boolean;
+    confidenceLevel: 'high' | 'medium';
+    detectedPatterns: string[];
+    timeZoneMentioned: boolean;
+    timeZone?: string;
+    bonusAwarded: number;
+    tier: number;
+  };
+
+  // Perfect job tracking
+  isPerfectJob?: boolean;
+  internalScore?: number; // Uncapped score for accurate ranking
+
   // Outcome
   won: boolean;
   wonAt?: Date;

@@ -1,6 +1,6 @@
 const { spawn } = require('child_process');
 
-const authCode = '5aa75c356846bc7f2f4f6a4ec5c09d42';
+const authCode = '86bc66af29a0742a30ccb0cb9d8cccf4';
 
 console.log('🚀 Starting token setup with provided auth code...\n');
 

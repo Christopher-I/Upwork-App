@@ -36,10 +36,11 @@ async function checkTokens() {
   console.log('  - refresh_token:', data.refresh_token ? data.refresh_token.substring(0, 20) + '...' : 'MISSING');
   console.log('  - expires_in:', data.expires_in || 'MISSING');
   console.log('  - expires_at:', data.expires_at || 'MISSING');
-  console.log('  - updated_at:', data.updated_at ? data.updated_at.toDate() : 'MISSING');
-  
+  console.log('  - updated_at:', data.updated_at ? (data.updated_at.toDate ? data.updated_at.toDate() : new Date(data.updated_at)) : 'MISSING');
+
   if (data.expires_at) {
-    const expiresAt = new Date(data.expires_at);
+    // Handle both Firestore Timestamp and string ISO dates
+    const expiresAt = data.expires_at.toDate ? data.expires_at.toDate() : new Date(data.expires_at);
     const now = new Date();
     const isExpired = expiresAt < now;
     const hoursUntilExpiry = (expiresAt - now) / (1000 * 60 * 60);

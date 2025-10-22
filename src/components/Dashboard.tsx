@@ -9,8 +9,9 @@ import { JobFilters, FilterOptions } from './JobFilters';
 import { Job } from '../types/job';
 import { filterAndSortJobs } from '../utils/jobFilters';
 import JobAnalyzerPage from './JobAnalyzer/JobAnalyzerPage';
+import { ReevaluateJobsButton } from './Admin/ReevaluateJobsButton';
 
-type TabType = 'recommended' | 'applied' | 'all' | 'analyzer';
+type TabType = 'recommended' | 'applied' | 'all' | 'archived' | 'analyzer';
 
 export function Dashboard() {
   // Persist active tab in localStorage
@@ -99,6 +100,18 @@ export function Dashboard() {
     return getDefaultFilters();
   });
 
+  const [archivedFilters, setArchivedFilters] = useState<FilterOptions>(() => {
+    const saved = localStorage.getItem('archivedFilters');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        // If parsing fails, use defaults
+      }
+    }
+    return getDefaultFilters();
+  });
+
   // Get current filters based on active tab
   const filters = useMemo(() => {
     switch (activeTab) {
@@ -108,10 +121,12 @@ export function Dashboard() {
         return appliedFilters;
       case 'all':
         return allFilters;
+      case 'archived':
+        return archivedFilters;
       default:
         return recommendedFilters;
     }
-  }, [activeTab, recommendedFilters, appliedFilters, allFilters]);
+  }, [activeTab, recommendedFilters, appliedFilters, allFilters, archivedFilters]);
 
   // Save active tab to localStorage when it changes
   const handleTabChange = (tab: TabType) => {
@@ -139,6 +154,10 @@ export function Dashboard() {
       case 'all':
         setAllFilters(newFilters);
         localStorage.setItem('allFilters', JSON.stringify(newFilters));
+        break;
+      case 'archived':
+        setArchivedFilters(newFilters);
+        localStorage.setItem('archivedFilters', JSON.stringify(newFilters));
         break;
     }
   };
@@ -207,6 +226,13 @@ export function Dashboard() {
           </div>
         </div>
 
+        {/* Admin Tools - Only visible in Admin mode */}
+        {viewMode === 'admin' && (
+          <div className="mb-6">
+            <ReevaluateJobsButton />
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex gap-4 sm:gap-6 md:gap-8 mb-6 border-b border-gray-200 overflow-x-auto">
           <TabButton
@@ -229,6 +255,13 @@ export function Dashboard() {
             count={counts.total}
           >
             All Jobs
+          </TabButton>
+          <TabButton
+            active={activeTab === 'archived'}
+            onClick={() => handleTabChange('archived')}
+            count={counts.archived}
+          >
+            Archived
           </TabButton>
           <TabButton
             active={activeTab === 'analyzer'}
@@ -281,6 +314,8 @@ export function Dashboard() {
                     "You haven't applied to any jobs yet."}
                   {activeTab === 'all' &&
                     'No jobs in database. Click refresh to fetch jobs.'}
+                  {activeTab === 'archived' &&
+                    "No archived jobs. Archive jobs that are already hired or not relevant."}
                 </p>
                 {activeTab === 'recommended' && (
                   <button className="mt-6 px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors">

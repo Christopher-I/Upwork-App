@@ -2,16 +2,28 @@ import Anthropic from '@anthropic-ai/sdk';
 
 // Support both browser (Vite) and Node (testing) environments
 const getApiKey = () => {
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
+  // Try process.env first (works in Node.js/tsx)
+  if (typeof process !== 'undefined' && process.env?.VITE_ANTHROPIC_API_KEY) {
+    return process.env.VITE_ANTHROPIC_API_KEY;
+  }
+  // Fall back to import.meta.env (Vite browser env)
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ANTHROPIC_API_KEY) {
     return import.meta.env.VITE_ANTHROPIC_API_KEY;
   }
-  return process.env.VITE_ANTHROPIC_API_KEY;
+  return undefined;
 };
 
-const anthropic = new Anthropic({
-  apiKey: getApiKey(),
-  dangerouslyAllowBrowser: true, // Only for development/testing
-});
+// Lazy initialization to support dotenv loading in test environments
+let anthropic: Anthropic | null = null;
+const getAnthropic = () => {
+  if (!anthropic) {
+    anthropic = new Anthropic({
+      apiKey: getApiKey(),
+      dangerouslyAllowBrowser: true, // Only for development/testing
+    });
+  }
+  return anthropic;
+};
 
 export interface ChatGPTScoringResult {
   ehrPotential: {
@@ -69,7 +81,7 @@ export async function scoreJobWithClaude(
   );
 
   try {
-    const message = await anthropic.messages.create({
+    const message = await getAnthropic().messages.create({
       model: 'claude-3-7-sonnet-20250219', // Latest Sonnet model (Feb 2025)
       max_tokens: 2048,
       temperature: 0.3, // Low temperature for consistency (Claude uses 0-1 scale)
@@ -209,44 +221,141 @@ function buildScoringPrompt(
    - Be realistic about the actual time required
 
 2. **STEP 2 - Estimate Fair Market Value:**
-   - Determine what this project would REALISTICALLY be worth in the professional market
-   - Use these Fair Market Value guidelines:
-     * **Landing pages (1-3 pages)**: $1,500 - $3,000
-     * **Small business websites (5-10 pages)**: $3,000 - $8,000
-     * **E-commerce sites (Shopify/WooCommerce)**: $5,000 - $15,000
-     * **Custom web apps/portals**: $8,000 - $25,000
-     * **Complex platforms with integrations**: $15,000 - $50,000+
-   - Consider complexity, features, and deliverables
-   - **IGNORE the client's stated budget** - estimate objectively
+
+Estimate what a professional web development agency would charge for this project. Consider these factors:
+
+**A. Base Scope Analysis:**
+   - How many pages/screens/features are described?
+   - Template-based or fully custom build?
+   - What's the core functionality being requested?
+   - Is there existing work/assets mentioned (mockups, content, designs)?
+
+**B. Complexity Multipliers - Look for these signals:**
+   - Custom API integrations or third-party systems
+   - User authentication, roles, and permissions
+   - Database design and custom data architecture
+   - Scalability requirements ("scalable", "high-traffic", "performance")
+   - Security and compliance mentions (HIPAA, SOC2, GDPR, "secure", "compliance")
+   - Multi-stakeholder coordination (investors, departments, teams)
+   - Real-time features, websockets, or advanced interactivity
+
+**C. Client Type Signals - These indicate higher budgets:**
+   - **Agency/Intermediary** ("my client needs", "our client", "for a client"):
+     → Expect 1.5-2x standard rates (agency markup built into budget)
+
+   - **Government/Institutional** ("government", "ministry", "agency", "university"):
+     → Expect 2-3x standard rates (procurement processes, compliance, stakeholder complexity)
+
+   - **Enterprise** ("enterprise", "corporation", "multiple departments"):
+     → Expect 2-4x standard rates (enterprise complexity, legal, procurement)
+
+   - **Small Business/Individual** (default):
+     → Standard professional rates
+
+**D. Professional Requirement Signals - These increase value:**
+   - Tight deadlines with specific dates
+   - "Already invested" signals ("have mockups", "have designs", "hired designer")
+   - Previous developer failed ("tried before", "didn't work out", "redo")
+   - Formal requirements (NDA, SOW, deliverables, milestones mentioned)
+   - Geographic restrictions ("US-based only", "North America only") = premium rates
+   - Explicit premium language ("willing to pay higher", "quality over cost")
+
+**REAL EXAMPLES for Calibration:**
+
+Use these real-world examples to calibrate your estimates. Don't fit jobs into categories - assess the actual scope.
+
+**Example 1: Simple Landing Page**
+Description: "Need a 3-page landing page with contact form for my startup"
+→ Estimate: $2,000-3,000
+→ Reasoning: 10-15 hours, standard small business rates ($150-200/hr effective)
+
+**Example 2: Small Business Website**
+Description: "8-page website for law firm, need CMS, contact forms, blog, testimonials"
+→ Estimate: $8,000-12,000
+→ Reasoning: 40-60 hours, professional services client, clear requirements
+
+**Example 3: E-commerce Store**
+Description: "Shopify store with 50 products, custom checkout flow, inventory management"
+→ Estimate: $15,000-25,000
+→ Reasoning: 80-120 hours, e-commerce complexity, custom features beyond template
+
+**Example 4: Custom Portal (Mid-Range)**
+Description: "Client portal for video company, file sharing, project status, user accounts"
+→ Estimate: $25,000-40,000
+→ Reasoning: 120-180 hours, custom development, user management, file handling
+
+**Example 5: Agency Custom LMS (High-Value) - REAL JOB**
+Description: "My team and I have a client that needs custom learning site. Already have mockups and tons of content. Transform Webflow LMS template but have additional things we want. Looking for US-based only."
+→ Actual Value: $70,000
+→ Reasoning:
+  - Agency hiring for client (1.5-2x multiplier)
+  - Already invested (mockups, content = serious budget)
+  - Custom beyond template
+  - US-based only (premium rate requirement)
+  - 300-400 hours at premium rates
+
+**Example 6: Government Platform (High-Value) - REAL JOB**
+Description: "Interactive online platform to track climate change resilience metrics for Caribbean government. Features: CMS, visual scorecard, interactive database, decision-making tool, analytics. Requirements: Degree, years of experience, government client experience. Scalable, secure, open source preferred. Multi-stakeholder (investors + government)."
+→ Actual Value: $50,000
+→ Reasoning:
+  - Government client (2-3x multiplier)
+  - Multi-stakeholder complexity (investors + government)
+  - Formal requirements (degree, experience)
+  - Professional infrastructure (scalable, secure)
+  - Complex feature set (CMS + scorecard + database + analytics)
+  - 200-250 hours at government rates
+
+**Example 7: Enterprise Integration Portal**
+Description: "Need enterprise portal with Salesforce integration, SSO authentication, role-based access, compliance with SOC2, support 500+ users, scalable architecture"
+→ Estimate: $100,000-150,000
+→ Reasoning:
+  - Enterprise client (2-4x multiplier)
+  - Enterprise system integration (Salesforce)
+  - Compliance requirements (SOC2)
+  - Scalability for large user base
+  - 400-600 hours at enterprise rates
+
+**CRITICAL PRICING RULES:**
+
+1. **No Artificial Caps**: If scope and signals warrant $100K+, estimate $100K+. Don't artificially limit estimates.
+
+2. **Ignore Client's Budget**: The client's stated budget should have ZERO impact on your fair market value estimate.
+
+3. **Apply Multipliers**: Government/agency/enterprise are NOT just "more hours" - they have fundamentally higher budgets:
+   - Agency: 1.5-2x (they have client budget + markup)
+   - Government: 2-3x (procurement, compliance, stakeholders)
+   - Enterprise: 2-4x (enterprise complexity, legal, procurement)
+
+4. **"Already Invested" = Higher Total**: If they mention "have mockups", "tried previous developer", this is often phase 2 of a larger budget.
 
 3. **STEP 3 - Calculate EHR:**
    - EHR = estimatedPrice (Fair Market Value) ÷ estimatedHours
    - This shows the ACTUAL earning potential per hour
-   - Example: Shopify redesign worth $8,000 Fair Market Value ÷ 40 hours = $200/hr EHR
+   - Example: Government platform worth $50,000 ÷ 220 hours = $227/hr EHR
 
-**CRITICAL: Ignore Client's Budget Completely**
+4. **Hour Estimation Guidelines:**
 
-- **The client's stated budget (hourly rate or fixed price) should have ZERO impact on your Fair Market Value estimate**
-- Base your estimate ONLY on:
-  1. The project scope and requirements described in the job description
-  2. Industry standard pricing for similar projects
-  3. Realistic time estimates for the work involved
+**Small Projects:**
+- Quick fix/small task: 1-5 hours
+- Simple landing page (1-3 pages): 10-20 hours
+- Multi-page website (5-10 pages): 30-50 hours
 
-- **Example:** If a client offers $500 for a landing page that would normally cost $2,500 in the market, estimate $2,500 and ignore the $500 completely
+**Medium Projects:**
+- Website with CMS/blog (10+ pages): 40-70 hours
+- E-commerce store (template + customization): 60-100 hours
+- Simple portal/dashboard: 50-80 hours
 
-4. **Hour estimation guidelines by complexity:**
-   - Quick fix/small task: 1-5 hours
-   - Simple landing page (1-3 pages): 15-25 hours
-   - Multi-page website (5-10 pages): 25-40 hours
-   - Multi-page with CMS/blog: 30-45 hours
-   - Portal/dashboard with features: 40-60 hours
-   - Complex portal with integrations: 60-100 hours
-   - Enterprise system: 100-150+ hours
+**Large Projects:**
+- Custom web app/portal with features: 100-200 hours
+- Complex portal with integrations: 150-300 hours
+- Government/institutional platform: 200-350 hours
+- Enterprise multi-stakeholder system: 300-600 hours
 
 **IMPORTANT:**
-- Always estimate hours realistically based on the actual scope described
-- Don't artificially reduce hours to inflate EHR - be honest about time required
-- If description says "tight budget", "cheap", "low budget" → this may indicate lower quality expectations, but still estimate based on what YOU would charge for that scope (likely 3-7 pts due to unclear requirements)
+- Government/agency projects need MORE hours (stakeholder meetings, revisions, approvals)
+- "Already have mockups" doesn't reduce hours - it means they want MORE custom work
+- Tight deadlines don't reduce hours - same work in less time
+- Be honest about time required - don't artificially reduce to inflate EHR
 
 **Output Required:**
 - score: 0-15

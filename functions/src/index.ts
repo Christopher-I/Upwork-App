@@ -158,16 +158,13 @@ async function fetchJobsForSearch(
 
       // Make GraphQL request using Upwork OAuth2 client's Graphql router
       const response: any = await new Promise((resolve, reject) => {
-        // IMPROVED SEARCH: Use searchTerm_eq with andTerms_all
-        // This searches BOTH title AND description for better coverage
-        // Alternative: titleExpression_eq only searches titles
+        // Use titleExpression_eq for keyword search in job titles
+        // This is confirmed to work with Upwork's API
         const fullQuery = `
           query {
             marketplaceJobPostingsSearch(
               marketPlaceJobFilter: {
-                searchTerm_eq: {
-                  andTerms_all: "${searchTerm}"
-                }
+                titleExpression_eq: "${searchTerm}"
                 pagination_eq: { first: 100, after: "${cursor}" }
               }
               searchType: USER_JOBS_SEARCH
@@ -281,7 +278,7 @@ async function fetchJobsForSearch(
 
       // Add jobs from this page
       edges.forEach((edge: any) => {
-        if (edge.node) {
+        if (edge && edge.node) {
           jobs.push(edge.node);
         }
       });

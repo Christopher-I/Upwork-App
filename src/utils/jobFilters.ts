@@ -190,7 +190,12 @@ export function sortJobs(
       jobs.sort((a, b) => b.budget - a.budget);
       break;
     case 'score_high':
-      jobs.sort((a, b) => b.score - a.score);
+      // Use internalScore for perfect jobs, regular score otherwise
+      jobs.sort((a, b) => {
+        const scoreA = (a as any).internalScore || a.score;
+        const scoreB = (b as any).internalScore || b.score;
+        return scoreB - scoreA;
+      });
       break;
     case 'market_rate_high':
       jobs.sort((a, b) => (b.estimatedPrice || 0) - (a.estimatedPrice || 0));

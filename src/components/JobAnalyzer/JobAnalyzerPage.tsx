@@ -24,8 +24,8 @@ export default function JobAnalyzerPage({ settings }: JobAnalyzerPageProps) {
   const handleAnalyze = async (input: JobAnalysisInput) => {
     setAnalyzing(true);
     try {
-      // Run pricing analysis
-      const pricing = analyzePricing(input);
+      // Run pricing analysis (now calls AI)
+      const pricing = await analyzePricing(input);
 
       // Update state
       setCurrentInput(input);

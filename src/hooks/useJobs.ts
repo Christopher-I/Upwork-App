@@ -6,7 +6,7 @@ import { Job } from '../types/job';
 /**
  * Hook to fetch and listen to jobs in real-time
  */
-export function useJobs(filter?: 'recommended' | 'applied' | 'all') {
+export function useJobs(filter?: 'recommended' | 'applied' | 'all' | 'archived') {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -16,7 +16,15 @@ export function useJobs(filter?: 'recommended' | 'applied' | 'all') {
       // Build query based on filter
       let q = query(collection(db, 'jobs'));
 
-      if (filter === 'recommended') {
+      if (filter === 'archived') {
+        // Archived jobs tab - only show archived jobs
+        q = query(
+          collection(db, 'jobs'),
+          where('archived', '==', true),
+          orderBy('archivedAt', 'desc')
+        );
+      } else if (filter === 'recommended') {
+        // Original query - filter archived jobs client-side
         q = query(
           collection(db, 'jobs'),
           where('finalClassification', '==', 'recommended'),
@@ -24,13 +32,14 @@ export function useJobs(filter?: 'recommended' | 'applied' | 'all') {
           orderBy('score', 'desc')
         );
       } else if (filter === 'applied') {
+        // Original query - filter archived jobs client-side
         q = query(
           collection(db, 'jobs'),
           where('applied', '==', true),
           orderBy('appliedAt', 'desc')
         );
       } else {
-        // All jobs (excluding applied), sorted by score
+        // All jobs (excluding applied) - filter archived jobs client-side
         q = query(
           collection(db, 'jobs'),
           where('applied', '==', false),
@@ -42,7 +51,7 @@ export function useJobs(filter?: 'recommended' | 'applied' | 'all') {
       const unsubscribe = onSnapshot(
         q,
         (snapshot: QuerySnapshot<DocumentData>) => {
-          const jobsData = snapshot.docs.map((doc) => ({
+          let jobsData = snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
             // Convert Firestore timestamps to Date objects
@@ -50,8 +59,14 @@ export function useJobs(filter?: 'recommended' | 'applied' | 'all') {
             fetchedAt: doc.data().fetchedAt?.toDate(),
             scoredAt: doc.data().scoredAt?.toDate(),
             appliedAt: doc.data().appliedAt?.toDate(),
+            archivedAt: doc.data().archivedAt?.toDate(),
             wonAt: doc.data().wonAt?.toDate(),
           })) as Job[];
+
+          // Client-side filter: exclude archived jobs from non-archived tabs
+          if (filter !== 'archived') {
+            jobsData = jobsData.filter(job => !job.archived);
+          }
 
           setJobs(jobsData);
           setLoading(false);
@@ -77,12 +92,13 @@ export function useJobs(filter?: 'recommended' | 'applied' | 'all') {
 
 /**
  * Hook to get job counts by classification
- * Applies same filters as Dashboard (US-only, hired jobs)
+ * Applies same filters as Dashboard (US-only, hired jobs, archived jobs)
  */
 export function useJobCounts(clientCountry: 'us_only' | 'all' = 'us_only') {
   const [counts, setCounts] = useState({
     recommended: 0,
     applied: 0,
+    archived: 0,
     total: 0,
   });
 
@@ -90,6 +106,7 @@ export function useJobCounts(clientCountry: 'us_only' | 'all' = 'us_only') {
     const unsubscribe = onSnapshot(collection(db, 'jobs'), (snapshot) => {
       let recommended = 0;
       let applied = 0;
+      let archived = 0;
       let total = 0;
 
       snapshot.docs.forEach((doc) => {
@@ -114,6 +131,12 @@ export function useJobCounts(clientCountry: 'us_only' | 'all' = 'us_only') {
           }
         }
 
+        // Count archived jobs separately
+        if (data.archived === true) {
+          archived++;
+          return; // Don't count archived jobs in other categories
+        }
+
         // Count after filters
         // Only count non-applied jobs for recommended and total
         if (data.applied !== true) {
@@ -127,6 +150,7 @@ export function useJobCounts(clientCountry: 'us_only' | 'all' = 'us_only') {
       setCounts({
         recommended,
         applied,
+        archived,
         total,
       });
     });
