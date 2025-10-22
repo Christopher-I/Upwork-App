@@ -140,17 +140,27 @@ export function applyRecommendationFilters(
   // ═══════════════════════════════════════════════════════════════════════════
   // If job doesn't meet Star Criteria or Exceptional Quality, it must pass ALL standard filters
 
+  // Calculate job age in days
+  const jobAgeInDays = job.postedAt
+    ? (Date.now() - job.postedAt.getTime()) / (1000 * 60 * 60 * 24)
+    : 0; // If no postedAt, assume new (shouldn't happen with fixed transformUpworkJob)
+
+  // Check if job is fresh enough for normal recommendations
+  const isFresh = jobAgeInDays <= RECOMMENDATION_THRESHOLDS.MAX_JOB_AGE_DAYS_NORMAL;
+
   const passes =
     job.score >= settings.minScore &&
     job.estimatedEHR >= settings.minEHR &&
     job.client?.paymentVerified === true &&
     !job.isDuplicate &&
-    !job.isRepost;
+    !job.isRepost &&
+    isFresh; // NEW: Age check for pathway 3
 
   if (passes) {
     console.log(`✓ [NORMAL FILTERS] Recommending: ${job.title}`);
     console.log(`   - Score: ${job.score}/${settings.minScore}`);
     console.log(`   - EHR: $${job.estimatedEHR}/$${settings.minEHR}`);
+    console.log(`   - Age: ${Math.round(jobAgeInDays)} days (max: ${RECOMMENDATION_THRESHOLDS.MAX_JOB_AGE_DAYS_NORMAL})`);
     return 'recommended';
   }
 
@@ -164,6 +174,7 @@ export function applyRecommendationFilters(
   console.log(`   - Payment verified: ${job.client?.paymentVerified ? '✓' : '✗'}`);
   console.log(`   - Not duplicate: ${!job.isDuplicate ? '✓' : '✗'}`);
   console.log(`   - Not repost: ${!job.isRepost ? '✓' : '✗'}`);
+  console.log(`   - Fresh (≤${RECOMMENDATION_THRESHOLDS.MAX_JOB_AGE_DAYS_NORMAL}d): ${Math.round(jobAgeInDays)}d ${isFresh ? '✓' : '✗'}`);
 
   return 'not_recommended';
 }
@@ -180,6 +191,9 @@ export const RECOMMENDATION_THRESHOLDS = {
   // Star Criteria
   STAR_CRITERIA_MIN_MARKET_RATE: 5000, // $5,000+
   STAR_CRITERIA_MIN_CLIENT_RATING: 4.0, // 4 stars or higher
+
+  // Age Filter (Pathway 3 only - does NOT apply to Star Criteria or Exceptional Quality)
+  MAX_JOB_AGE_DAYS_NORMAL: 7, // Only recommend standard jobs posted within last 7 days
 
   // These are calculated in scoring.ts but documented here for reference:
   // - hasOpenBudget: Checks professionalSignals.openBudget score > 0

@@ -237,7 +237,9 @@ export async function fetchAllJobs(
  */
 export function transformUpworkJob(upworkJob: any): Partial<Job> {
   // Handle both API formats: createdAt (old) and createdDateTime (new from Cloud Function)
-  const createdDate = upworkJob.createdDateTime || upworkJob.createdAt || upworkJob.publishedDateTime;
+  // IMPORTANT: Use publishedDateTime first - this is the repost date if job was reposted
+  // For reposted jobs, we want to treat them as "fresh" based on repost date, not original post date
+  const createdDate = upworkJob.publishedDateTime || upworkJob.createdDateTime || upworkJob.createdAt;
 
   // Parse budget from different formats
   let budget = 0;
