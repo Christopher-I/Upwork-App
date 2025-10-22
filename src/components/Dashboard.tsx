@@ -8,8 +8,9 @@ import { SettingsPanel } from './SettingsPanel';
 import { JobFilters, FilterOptions } from './JobFilters';
 import { Job } from '../types/job';
 import { filterAndSortJobs } from '../utils/jobFilters';
+import JobAnalyzerPage from './JobAnalyzer/JobAnalyzerPage';
 
-type TabType = 'recommended' | 'applied' | 'all';
+type TabType = 'recommended' | 'applied' | 'all' | 'analyzer';
 
 export function Dashboard() {
   // Persist active tab in localStorage
@@ -144,7 +145,7 @@ export function Dashboard() {
 
   const { settings, updateSettings } = useSettings();
 
-  const { jobs: rawJobs, loading } = useJobs(activeTab);
+  const { jobs: rawJobs, loading } = useJobs(activeTab === 'analyzer' ? 'all' : activeTab);
   const counts = useJobCounts(filters.clientCountry);
 
   // Apply filters and sorting (delegated to utility function)
@@ -229,64 +230,77 @@ export function Dashboard() {
           >
             All Jobs
           </TabButton>
+          <TabButton
+            active={activeTab === 'analyzer'}
+            onClick={() => handleTabChange('analyzer')}
+          >
+            Job Analyzer
+          </TabButton>
         </div>
 
-        {/* Total Market Value - Show on recommended and all jobs tabs (Admin View Only) */}
-        {viewMode === 'admin' && (activeTab === 'recommended' || activeTab === 'all') && (
-          <div className="bg-gradient-to-r from-success-50 to-success-100 border border-success-200 rounded-lg px-6 py-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm text-success-700 font-medium mb-1">Total Pipeline Value</p>
-                <p className="text-2xl sm:text-3xl font-bold text-success-900">
-                  ${jobs.reduce((sum, job) => sum + (job.estimatedPrice || 0), 0).toLocaleString()}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs sm:text-sm text-success-700 font-medium mb-1">Avg Fair Market Value</p>
-                <p className="text-xl sm:text-2xl font-bold text-success-900">
-                  ${jobs.length > 0 ? Math.round(jobs.reduce((sum, job) => sum + (job.estimatedPrice || 0), 0) / jobs.length).toLocaleString() : 0}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Filters - Show on all tabs with independent settings */}
-        <JobFilters filters={filters} onFilterChange={handleFilterChange} />
-
-        {/* Jobs Grid */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-            <p className="text-gray-500 mt-4">Loading jobs...</p>
-          </div>
-        ) : jobs.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-            <p className="text-gray-500 text-base">
-              {activeTab === 'recommended' &&
-                'No recommended jobs yet. Click refresh to fetch jobs from Upwork.'}
-              {activeTab === 'applied' &&
-                "You haven't applied to any jobs yet."}
-              {activeTab === 'all' &&
-                'No jobs in database. Click refresh to fetch jobs.'}
-            </p>
-            {activeTab === 'recommended' && (
-              <button className="mt-6 px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors">
-                Refresh Jobs
-              </button>
-            )}
-          </div>
+        {/* Show Job Analyzer when analyzer tab is active */}
+        {activeTab === 'analyzer' ? (
+          <JobAnalyzerPage settings={settings} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {jobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                onClick={() => setSelectedJob(job)}
-                viewMode={viewMode}
-              />
-            ))}
-          </div>
+          <>
+            {/* Total Market Value - Show on recommended and all jobs tabs (Admin View Only) */}
+            {viewMode === 'admin' && (activeTab === 'recommended' || activeTab === 'all') && (
+              <div className="bg-gradient-to-r from-success-50 to-success-100 border border-success-200 rounded-lg px-6 py-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs sm:text-sm text-success-700 font-medium mb-1">Total Pipeline Value</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-success-900">
+                      ${jobs.reduce((sum, job) => sum + (job.estimatedPrice || 0), 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs sm:text-sm text-success-700 font-medium mb-1">Avg Fair Market Value</p>
+                    <p className="text-xl sm:text-2xl font-bold text-success-900">
+                      ${jobs.length > 0 ? Math.round(jobs.reduce((sum, job) => sum + (job.estimatedPrice || 0), 0) / jobs.length).toLocaleString() : 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Filters - Show on all tabs with independent settings */}
+            <JobFilters filters={filters} onFilterChange={handleFilterChange} />
+
+            {/* Jobs Grid */}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                <p className="text-gray-500 mt-4">Loading jobs...</p>
+              </div>
+            ) : jobs.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                <p className="text-gray-500 text-base">
+                  {activeTab === 'recommended' &&
+                    'No recommended jobs yet. Click refresh to fetch jobs from Upwork.'}
+                  {activeTab === 'applied' &&
+                    "You haven't applied to any jobs yet."}
+                  {activeTab === 'all' &&
+                    'No jobs in database. Click refresh to fetch jobs.'}
+                </p>
+                {activeTab === 'recommended' && (
+                  <button className="mt-6 px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm transition-colors">
+                    Refresh Jobs
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {jobs.map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    onClick={() => setSelectedJob(job)}
+                    viewMode={viewMode}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {/* Job Detail Modal */}

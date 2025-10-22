@@ -6,3 +6,4 @@ export * from './job';
 export * from './settings';
 export * from './stats';
 export * from './pricing';
+export * from './jobAnalyzer';
