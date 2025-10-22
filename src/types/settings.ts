@@ -83,37 +83,53 @@ export interface PricingBand {
 
 export const DEFAULT_SETTINGS: Settings = {
   keywords: {
+    // CRITICAL: Using simple keywords without OR operators
+    // Upwork's titleExpression_eq uses EXACT MATCH, not OR logic
+    // Each search term is run separately and results are combined
     wideNet: [
-      'website redesign OR new website OR landing page OR website',
-      'React OR Vue OR Angular OR Next.js',
-      'web development OR full stack',
-      'web app OR web application',
+      'website',
+      'web development',
+      'landing page',
+      'web app',
+      'React',
+      'Vue',
+      'Next.js',
     ],
-    webflow: ['webflow OR web flow OR webflo'],
+    webflow: [
+      'webflow',
+      'web flow',
+    ],
     portals: [
-      'client portal OR customer portal OR member portal',
-      'membership site OR member area OR dashboard',
-      'secure login OR file sharing',
+      'client portal',
+      'customer portal',
+      'member portal',
+      'membership site',
+      'dashboard',
     ],
     ecommerce: [
-      'checkout optimization OR conversion optimization',
-      'online booking OR appointment scheduling',
+      'checkout optimization',
+      'conversion optimization',
+      'online booking',
     ],
     speedSEO: [
-      'core web vitals OR page speed OR site speed',
-      'conversion rate optimization OR CRO OR A/B testing',
+      'page speed',
+      'site speed',
+      'conversion rate optimization',
     ],
     automation: [
-      'zapier OR make OR integromat',
+      'zapier',
+      'make',
       'crm integration',
     ],
     vertical: [
-      'video production portal OR clinic portal',
-      'patient portal OR contractor website',
+      'video portal',
+      'clinic portal',
+      'patient portal',
     ],
     appDevelopment: [
-      'app development OR custom app',
-      'mobile app OR progressive web app OR PWA',
+      'app development',
+      'custom app',
+      'mobile app',
     ],
   },
 
