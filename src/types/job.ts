@@ -106,6 +106,11 @@ export interface Job {
     priceRange: string;
     generatedAt: Date;
     edited: boolean;
+    aiDetectionWarning?: {
+      detected: boolean;
+      message: string;
+      suggestions: string[];
+    };
   };
 
   // Status
@@ -154,6 +159,16 @@ export interface Job {
 
   // Exclusion reason
   exclusionReason?: string;
+
+  // AI detection test metadata
+  aiDetectionTest?: {
+    detected: boolean;
+    detectionType: 'ai_instruction' | 'human_question' | 'both' | 'none';
+    aiInstructions: string[];    // Trap words to avoid (e.g., ["banana"])
+    humanQuestions: string[];     // Questions to answer (e.g., ["favorite book"])
+    confidence: 'high' | 'medium' | 'low';
+    warning: string;              // User-facing warning message
+  };
 }
 
 export interface ScoreBreakdown {
